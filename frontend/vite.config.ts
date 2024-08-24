@@ -6,6 +6,7 @@ import * as path from "path";
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    alias: [{ find: '@src', replacement: path.resolve(__dirname, 'src') }],
+    alias: [{ find: "@src", replacement: path.resolve(__dirname, "src") }],
   },
+  base: "https://github.com/Deliver-apps/afip-previsiones",
 });
