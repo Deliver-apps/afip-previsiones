@@ -1,0 +1,68 @@
+# Node.js related
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+.pnpm-debug.log*
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+lerna-debug.log*
+.pnpm-debug.log*
+yarn-error.log*
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Optional npm cache directory
+.npm/
+
+# Optional eslint cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history
+
+# dotenv environment variables file
+.env
+.env.test
+.env.production
+
+# Build output directories
+dist/
+build/
+out/
+.vite/
+
+# Editor specific files
+.vscode/
+.idea/
+.DS_Store
+
+# TypeScript specific
+*.tsbuildinfo
+
+# Vite specific
+.vite/
+.cache/
+*.local
+
+# React specific
+*.env.local
+*.env.development.local
+*.env.test.local
+*.env.production.local
+public/*.map
+
+# Other Vite or React related
+*.local
+.vscode/*
+.history/
+
+# MacOS
+.DS_Store
