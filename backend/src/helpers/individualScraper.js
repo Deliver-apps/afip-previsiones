@@ -18,7 +18,11 @@ const individualScraper = async ({
   real_name: realName,
   retry,
 }) => {
-  const browser = await puppeteer.launch({ headless: false });
+  const browser = await puppeteer.launch({
+    headless: true,
+    executablePath: "/usr/bin/google-chrome",
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  });
   const page = await browser.newPage();
   const url = "https://www.afip.gob.ar/landing/default.asp";
 
