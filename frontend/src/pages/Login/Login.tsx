@@ -9,7 +9,7 @@ import Typography from "@mui/material/Typography";
 import { AppDispatch } from "@src/redux/store";
 import { Image, Footer } from "./components";
 import { login } from "@src/redux/states";
-import Cookies from "js-cookie";
+import imageLogin from "@src/assets/logo.png";
 
 interface FormField {
   id: number;
@@ -63,7 +63,7 @@ const Login: React.FC = () => {
           alignItems: "center",
         }}
       >
-        <Image imageSrc="../src/assets/logo.png" cover={true} />
+        <Image imageSrc={imageLogin} cover={true} />
         <Box component="form" onSubmit={loginHandler} noValidate sx={{ mt: 1 }}>
           {formFields.map((field) => (
             <TextField
