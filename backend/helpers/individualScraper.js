@@ -276,7 +276,7 @@ const openBooks = async (page) => {
   });
   logger.error("Button clicked...");
   await page.waitForFunction(() => document.readyState === "complete");
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  await new Promise((resolve) => setTimeout(resolve, 3000));
   logger.error("Waiting for #operacion...");
   const ningunaOperacionExists2 = await page.$("#ningunaOperacion");
   if (ningunaOperacionExists2) {
@@ -362,6 +362,7 @@ const getNewPage = async (browser) => {
     );
     const newPage = await newPagePromise;
     await newPage.waitForFunction(() => document.readyState === "complete");
+    await new Promise((resolve) => setTimeout(resolve, 2000));
     return newPage;
   } catch (error) {
     throw new Error("Failed to open new page: " + error.message);
