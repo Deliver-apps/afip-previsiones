@@ -8,6 +8,7 @@ const { putSheetData } = require("./helpers/sheets");
 const { authenticateToken } = require("./middlewares/authentication");
 const { getDataClients } = require("./helpers/getDataClients");
 const PORT = process.env.PORT || 3000;
+const path = require("path");
 
 app.use(cors());
 app.use('/screenshots', express.static(path.join(__dirname, 'screenshots')));
