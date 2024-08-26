@@ -160,6 +160,7 @@ const goToData = async (page) => {
 const buyBook = async (page) => {
   logger.info("Opening buy book...");
   await page.waitForFunction(() => document.readyState === "complete");
+  await new Promise((resolve) => setTimeout(resolve, 2000));
   await page.waitForSelector("#btnDropdownImportar");
   await page.click("#btnDropdownImportar");
 
@@ -196,6 +197,7 @@ const buyBook = async (page) => {
 const sellBook = async (page) => {
   logger.info("Opening sell book...");
   await page.waitForFunction(() => document.readyState === "complete");
+  await new Promise((resolve) => setTimeout(resolve, 2000));
   await page.waitForSelector("#btnDropdownImportar");
   await page.click("#btnDropdownImportar");
 
