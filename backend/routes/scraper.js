@@ -44,6 +44,10 @@ router.post("/previsiones", async (req, res) => {
     }
     await putSheetData(helper);
 
+    if (responseFailed.length === data.length) {
+      throw new Error("Fallaron todas las solicitudes");
+    }
+
     return res.json({ success: true, data: helper, failed: responseFailed });
   } catch (error) {
     console.error(error);

@@ -25,10 +25,7 @@ const individualScraper = async ({
       executablePath: config.nodeEnv
         ? config.chromeExecutablePath
         : puppeteer.executablePath(),
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-      ],
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
   } catch (error) {
     throw new Error("Failed to launch browser: " + error.message);
@@ -118,14 +115,31 @@ const individualScraper = async ({
     await handleRetry(error);
     const milisecondsdatetime = new Date().getTime();
 
-    if(newPage2) {
-      await newPage2.screenshot({ path: `error-${milisecondsdatetime}.png` });
-    } else if(newPage) {
-      await newPage.screenshot({ path: `error-${milisecondsdatetime}.png` });
+    if (newPage2) {
+      await newPage2.screenshot({
+        path: path.join(
+          __dirname,
+          "screenshots",
+          `screenshot-${Date.now()}.png`
+        ),
+      });
+    } else if (newPage) {
+      await newPage.screenshot({
+        path: path.join(
+          __dirname,
+          "screenshots",
+          `screenshot-${Date.now()}.png`
+        ),
+      });
     } else {
-      await page.screenshot({ path: `error-${milisecondsdatetime}.png` });
+      await page.screenshot({
+        path: path.join(
+          __dirname,
+          "screenshots",
+          `screenshot-${Date.now()}.png`
+        ),
+      });
     }
-      
 
     return { error: error.message };
   }
