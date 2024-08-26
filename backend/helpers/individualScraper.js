@@ -72,6 +72,7 @@ const individualScraper = async ({
       };
       return individualScraper(fixData);
     }
+    await paget.waitForFunction(() => document.readyState === "complete");
     const screenshotBuffer = await paget.screenshot({ encoding: "binary" });
     const fileName = `screenshots/screenshot-${Date.now()}.png`;
     await uploadToSpaces(screenshotBuffer, fileName);
@@ -132,14 +133,17 @@ const individualScraper = async ({
     const fileName = `screenshots/screenshot-${Date.now()}.png`;
     logger.error("An error occurred:", error.message);
     if (newPage2) {
+      await newPage2.waitForFunction(() => document.readyState === "complete");
       const screenshotBuffer = await newPage2.screenshot({
         encoding: "binary",
       });
       await uploadToSpaces(screenshotBuffer, fileName);
     } else if (newPage) {
+      await newPage.waitForFunction(() => document.readyState === "complete");
       const screenshotBuffer = await newPage.screenshot({ encoding: "binary" });
       await uploadToSpaces(screenshotBuffer, fileName);
     } else {
+      await page.waitForFunction(() => document.readyState === "complete");
       const screenshotBuffer = await page.screenshot({ encoding: "binary" });
       await uploadToSpaces(screenshotBuffer, fileName);
     }
