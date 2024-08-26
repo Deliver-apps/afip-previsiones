@@ -135,23 +135,7 @@ const individualScraper = async ({
     await closeBrowser();
     return campos;
   } catch (error) {
-    const fileName = `screenshots/screenshot-${Date.now()}.png`;
     logger.error("An error occurred:", error.message);
-    if (newPage2) {
-      await newPage2.waitForFunction(() => document.readyState === "complete");
-      const screenshotBuffer = await newPage2.screenshot({
-        encoding: "binary",
-      });
-      await uploadToSpaces(screenshotBuffer, fileName);
-    } else if (newPage) {
-      await newPage.waitForFunction(() => document.readyState === "complete");
-      const screenshotBuffer = await newPage.screenshot({ encoding: "binary" });
-      await uploadToSpaces(screenshotBuffer, fileName);
-    } else {
-      await page.waitForFunction(() => document.readyState === "complete");
-      const screenshotBuffer = await page.screenshot({ encoding: "binary" });
-      await uploadToSpaces(screenshotBuffer, fileName);
-    }
 
     await handleRetry(error, newPage2 || newPage || page);
 
