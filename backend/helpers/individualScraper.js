@@ -115,12 +115,14 @@ const individualScraper = async ({
     await handleRetry(error);
     const milisecondsdatetime = new Date().getTime();
 
+    logger.error("An error occurred:", milisecondsdatetime);
+
     if (newPage2) {
-      await newPage2.screenshot({
+      await page.screenshot({
         path: path.join(
           __dirname,
           "screenshots",
-          `screenshot-${Date.now()}.png`
+          `screenshot-${milisecondsdatetime}.png`
         ),
       });
     } else if (newPage) {
@@ -128,7 +130,7 @@ const individualScraper = async ({
         path: path.join(
           __dirname,
           "screenshots",
-          `screenshot-${Date.now()}.png`
+          `screenshot-${milisecondsdatetime}.png`
         ),
       });
     } else {
@@ -136,7 +138,7 @@ const individualScraper = async ({
         path: path.join(
           __dirname,
           "screenshots",
-          `screenshot-${Date.now()}.png`
+          `screenshot-${milisecondsdatetime}.png`
         ),
       });
     }
