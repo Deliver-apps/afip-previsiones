@@ -1,5 +1,5 @@
-import { S3 } from "@aws-sdk/client-s3";
-import { config } from "./config/config";
+const S3 = require("@aws-sdk/client-s3");
+const config = require("./config");
 
 const spacesEndpoint = "https://nyc3.digitaloceanspaces.com";
 
