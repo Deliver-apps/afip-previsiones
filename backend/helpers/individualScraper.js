@@ -112,13 +112,12 @@ const individualScraper = async ({
     await closeBrowser();
     return campos;
   } catch (error) {
-    await handleRetry(error);
     const milisecondsdatetime = new Date().getTime();
 
     logger.error("An error occurred:", milisecondsdatetime);
 
     if (newPage2) {
-      await page.screenshot({
+      await newPage2.screenshot({
         path: path.join(
           __dirname,
           "screenshots",
@@ -142,6 +141,8 @@ const individualScraper = async ({
         ),
       });
     }
+
+    await handleRetry(error);
 
     return { error: error.message };
   }
