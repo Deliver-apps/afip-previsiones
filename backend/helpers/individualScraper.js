@@ -37,7 +37,7 @@ const individualScraper = async ({
   let newPage2;
   try {
     browser = await puppeteer.launch({
-      headless: true,
+      headless: false,
       executablePath: config.nodeEnv
         ? config.chromeExecutablePath
         : puppeteer.executablePath(),
