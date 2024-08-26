@@ -3,12 +3,25 @@ const logger = require("../config/logger");
 const config = require("../config/config");
 const path = require("path");
 const { screenshotDir } = require("../app");
+const { s3ClientPrevisiones } = require("../digitalOceanClient");
 
 const formatCUIT = (cuit) => {
   if (cuit.length !== 11) {
     throw new Error("CUIT must be 11 digits long");
   }
   return `${cuit.slice(0, 2)}-${cuit.slice(2, 10)}-${cuit.slice(10)}`;
+};
+
+const uploadToSpaces = async (buffer, fileName) => {
+  const params = {
+    Bucket: "previsiones-afip",
+    Key: fileName,
+    Body: buffer,
+    ACL: "public-read",
+    ContentType: "image/png",
+  };
+
+  return s3ClientPrevisiones.upload(params).promise();
 };
 
 const individualScraper = async ({
@@ -21,6 +34,9 @@ const individualScraper = async ({
   retry,
 }) => {
   let browser;
+  let page;
+  let newPage;
+  let newPage2;
   try {
     browser = await puppeteer.launch({
       headless: true,
@@ -33,7 +49,7 @@ const individualScraper = async ({
     throw new Error("Failed to launch browser: " + error.message);
   }
 
-  const page = await browser.newPage();
+  page = await browser.newPage();
   const url = "https://www.afip.gob.ar/landing/default.asp";
 
   const closeBrowser = async () => {
@@ -42,7 +58,7 @@ const individualScraper = async ({
     }
   };
 
-  const handleRetry = async (error) => {
+  const handleRetry = async (error, paget) => {
     console.error("An error occurred:", error.message);
     if (!retry) {
       await closeBrowser();
@@ -58,11 +74,12 @@ const individualScraper = async ({
       };
       return individualScraper(fixData);
     }
+    const screenshotBuffer = await paget.screenshot({ encoding: "binary" });
+    const fileName = `screenshots/screenshot-${Date.now()}.png`;
+    await uploadToSpaces(screenshotBuffer, fileName);
     await closeBrowser();
     throw error;
   };
-  let newPage;
-  let newPage2;
 
   try {
     // Navigate to the initial URL
@@ -114,37 +131,23 @@ const individualScraper = async ({
     await closeBrowser();
     return campos;
   } catch (error) {
-    const milisecondsdatetime = new Date().getTime();
-
     logger.error("An error occurred:", milisecondsdatetime);
+    const fileName = `screenshots/screenshot-${Date.now()}.png`;
 
     if (newPage2) {
-      await newPage2.screenshot({
-        path: path.join(
-          __dirname,
-          screenshotDir,
-          `screenshot-${milisecondsdatetime}.png`
-        ),
+      const screenshotBuffer = await newPage2.screenshot({
+        encoding: "binary",
       });
+      await uploadToSpaces(screenshotBuffer, fileName);
     } else if (newPage) {
-      await newPage.screenshot({
-        path: path.join(
-          __dirname,
-          screenshotDir,
-          `screenshot-${milisecondsdatetime}.png`
-        ),
-      });
+      const screenshotBuffer = await newPage.screenshot({ encoding: "binary" });
+      await uploadToSpaces(screenshotBuffer, fileName);
     } else {
-      await page.screenshot({
-        path: path.join(
-          __dirname,
-          screenshotDir,
-          `screenshot-${milisecondsdatetime}.png`
-        ),
-      });
+      const screenshotBuffer = await page.screenshot({ encoding: "binary" });
+      await uploadToSpaces(screenshotBuffer, fileName);
     }
 
-    await handleRetry(error);
+    await handleRetry(error, newPage2 || newPage || page);
 
     return { error: error.message };
   }
