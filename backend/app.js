@@ -30,6 +30,7 @@ cron.schedule(
     logger.debug("Running cron job");
 
     const data = getDataClients();
+    logger.debug("Data clients", data);
 
     const helper = [];
     const responseFailed = [];
