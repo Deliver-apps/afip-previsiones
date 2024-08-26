@@ -10,7 +10,7 @@ const { getDataClients } = require("./helpers/getDataClients");
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
-
+app.use('/screenshots', express.static(path.join(__dirname, 'screenshots')));
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header(
