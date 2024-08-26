@@ -1,6 +1,7 @@
 const puppeteer = require("puppeteer");
 const logger = require("../config/logger");
 const config = require("../config/config");
+const path = require("path");
 
 const formatCUIT = (cuit) => {
   if (cuit.length !== 11) {
