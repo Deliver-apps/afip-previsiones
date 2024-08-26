@@ -7,8 +7,10 @@ const logger = require("./config/logger");
 const { putSheetData } = require("./helpers/sheets");
 const { authenticateToken } = require("./middlewares/authentication");
 const { getDataClients } = require("./helpers/getDataClients");
+const PORT = process.env.PORT || 3000;
 
 app.use(cors());
+
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header(
@@ -65,7 +67,6 @@ cron.schedule(
 app.use(express.json());
 app.use("/api/scrape", authenticateToken, scrapeRoute.router);
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });
