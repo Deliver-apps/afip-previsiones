@@ -25,11 +25,11 @@ app.use((req, res, next) => {
 //   "*/3 * * * *",
 //   async () => {
 cron.schedule(
-  "* 6 15,26 * *",
+  "0 6 15,26 * *",
   async () => {
     logger.debug("Running cron job");
 
-    const data = getDataClients();
+    const data = await getDataClients();
     logger.debug("Data clients", data);
 
     const helper = [];
