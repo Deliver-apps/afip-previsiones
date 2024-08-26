@@ -362,6 +362,7 @@ const getNewPage = async (browser) => {
 const loginToAfip = async (page, username, password) => {
   try {
     logger.info(`Logging in to AFIP...${username}`);
+    await page.waitForFunction(() => document.readyState === "complete");
     await page.waitForSelector("#F1\\:username", {
       timeout: 6_000,
     });
@@ -372,6 +373,7 @@ const loginToAfip = async (page, username, password) => {
       timeout: 6_000,
     });
     await page.type("#F1\\:password", password);
+    logger.info("Clicking login button...");
     await page.click("#F1\\:btnIngresar");
   } catch (error) {
     console.error("Login failed, retrying...", error.message);
@@ -382,10 +384,12 @@ const loginToAfip = async (page, username, password) => {
 const navigateToPortalIVA = async (page) => {
   try {
     logger.info("Navigating to Portal IVA...");
+    await page.waitForFunction(() => document.readyState === "complete");
     await page.waitForSelector("#buscadorInput", {
       timeout: 6_000,
     });
     await page.type("#buscadorInput", "Portal iva");
+    await page.waitForFunction(() => document.readyState === "complete");
     await page.click("#rbt-menu-item-0");
   } catch (error) {
     throw new Error("Failed to navigate to Portal IVA: " + error.message);
@@ -394,6 +398,7 @@ const navigateToPortalIVA = async (page) => {
 
 const switchCompanyContext = async (page, cuitCompany) => {
   try {
+    await page.waitForFunction(() => document.readyState === "complete");
     logger.info(`Switching company context to ${cuitCompany}...`);
     await page.waitForSelector('a[title="cambio relación"]', {
       timeout: 6_000,
@@ -447,6 +452,7 @@ const switchCompanyContext = async (page, cuitCompany) => {
 
 const checkAndValidatePeriod = async (page) => {
   try {
+    await page.waitForFunction(() => document.readyState === "complete");
     logger.info("Checking and validating period...");
     await page.waitForSelector("#periodo", {
       timeout: 6_000,
@@ -478,6 +484,7 @@ const extractData = async (
 ) => {
   try {
     logger.info(`Extracting data...${realName}`);
+    await page.waitForFunction(() => document.readyState === "complete");
     await page.waitForSelector("#importeDJV1", {
       timeout: 6_000,
     });
@@ -524,6 +531,7 @@ const extractData = async (
 const retryWithDelay = async (page, selector, delay) => {
   try {
     await new Promise((resolve) => setTimeout(resolve, delay));
+    await page.waitForFunction(() => document.readyState === "complete");
     await page.waitForSelector(selector, {
       timeout: 6_000,
     });
