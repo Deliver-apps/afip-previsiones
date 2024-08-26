@@ -1,4 +1,4 @@
-const supabase = require("../supabaseClient");
+const { supabase } = require("../supabaseClient");
 
 async function getDataClients() {
   let { data: users, error } = await supabase.from("afip_users").select("*");
