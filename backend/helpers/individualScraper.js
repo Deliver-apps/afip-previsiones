@@ -249,6 +249,7 @@ const sellBook = async (page) => {
 
 const openBooks = async (page) => {
   logger.info("Opening books...");
+  await page.waitForFunction(() => document.readyState === "complete");
   await page.evaluate(async () => {
     const button = document.querySelector(
       'button[aria-label="Sin texto (iva.home.btn.nueva.declaracion.alt)"]'
