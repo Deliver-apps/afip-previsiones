@@ -1,8 +1,6 @@
 const puppeteer = require("puppeteer");
 const logger = require("../config/logger");
 const config = require("../config/config");
-const path = require("path");
-const { screenshotDir } = require("../app");
 const { s3ClientPrevisiones } = require("../digitalOceanClient");
 
 const formatCUIT = (cuit) => {
