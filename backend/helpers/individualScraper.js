@@ -357,8 +357,8 @@ const getNewPage = async (browser) => {
     const newPagePromise = new Promise((resolve, reject) => {
       const timeout = setTimeout(
         () => reject(new Error("Timeout waiting for new page")),
-        5_000
-      ); // 10 seconds timeout
+        10_000 // Increased timeout for new page creation
+      );
 
       browser.once("targetcreated", async (target) => {
         clearTimeout(timeout);
@@ -366,18 +366,39 @@ const getNewPage = async (browser) => {
         resolve(page);
       });
     });
+
     logger.debug("Waiting for new page...");
     const newPageC = await newPagePromise;
     logger.debug("New page created...");
-    await newPageC.waitForFunction(() => document.readyState === "complete", { timeout: 10000 });
+
+    await newPageC.waitForFunction(() => document.readyState === "complete", {
+      timeout: 10_000,
+    });
     logger.debug("Document ready state complete...");
+
+    // Optional: wait for a specific element if the page is dynamic
+    await newPageC.waitForSelector("body", { visible: true, timeout: 10_000 });
+    logger.debug("Body element visible...");
+
+    // Conditional delay (optional)
+    // if you know the page needs additional time to load fully, use a fixed delay
     await new Promise((resolve) => setTimeout(resolve, 2000));
+
     logger.info("New page opened...");
     const screenshotBuffer = await newPageC.screenshot({ encoding: "binary" });
     const fileName = `screenshots/screenshot-${Date.now()}.png`;
-    await uploadToSpaces(screenshotBuffer, fileName);
+
+    try {
+      await uploadToSpaces(screenshotBuffer, fileName);
+      logger.info("Screenshot uploaded successfully...");
+    } catch (uploadError) {
+      logger.error("Failed to upload screenshot:", uploadError);
+      throw new Error("Screenshot upload failed: " + uploadError.message);
+    }
+
     return newPageC;
   } catch (error) {
+    logger.error("Error in getNewPage:", error); // Log the full error details
     throw new Error("Failed to open new page: " + error.message);
   }
 };
