@@ -183,7 +183,7 @@ const putSheetData = async (data) => {
     const columnHeader = result > 0 ? "A Pagar" : "A Favor";
 
     return [
-      ["Representado", campos.nameToShow],
+      ["Razón Social", campos.nameToShow],
       ["CUIT", campos.cuit],
       ["Ventas Neto", formattedMoneyFields.ventasNeto],
       ["Ventas IVA", formattedMoneyFields.ventasIVA],
@@ -207,7 +207,7 @@ const putSheetData = async (data) => {
   );
 
   const horizontalValues = [
-    "Representado",
+    "Razón Social",
     "CUIT",
     "Ventas Neto",
     "Ventas IVA",
