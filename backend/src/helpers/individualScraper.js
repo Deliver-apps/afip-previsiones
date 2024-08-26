@@ -1,6 +1,6 @@
-const { timeout } = require("puppeteer");
 const puppeteer = require("puppeteer");
 const logger = require("../config/logger");
+const config = require("../config/config");
 
 const formatCUIT = (cuit) => {
   if (cuit.length !== 11) {
@@ -22,8 +22,10 @@ const individualScraper = async ({
   try {
     browser = await puppeteer.launch({
       headless: true,
-      executablePath: "/usr/bin/google-chrome",
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      executablePath: config.nodeEnv
+        ? config.chromeExecutablePath
+        : puppeteer.executablePath(),
+      args: ["--no-sandbox", "--disable-setuid-sandbox", "--no-zygote", "--single-process"],
     });
   } catch (error) {
     throw new Error("Failed to launch browser: " + error.message);
