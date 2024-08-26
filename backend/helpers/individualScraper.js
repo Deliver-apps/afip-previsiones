@@ -368,9 +368,6 @@ const getNewPage = async (browser) => {
     await uploadToSpaces(screenshotBuffer, fileName);
     return newPageC;
   } catch (error) {
-    const screenshotBuffer = await newPage.screenshot({ encoding: "binary" });
-    const fileName = `screenshots/screenshot-${Date.now()}.png`;
-    await uploadToSpaces(screenshotBuffer, fileName);
     throw new Error("Failed to open new page: " + error.message);
   }
 };
