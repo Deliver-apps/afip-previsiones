@@ -354,13 +354,23 @@ const newDeclaration = async (page) => {
 const getNewPage = async (browser) => {
   try {
     logger.info("Opening new page...");
-    const newPagePromise = new Promise((resolve) =>
-      browser.once("targetcreated", async (target) =>
-        resolve(await target.page())
-      )
-    );
+    const newPagePromise = new Promise((resolve, reject) => {
+      const timeout = setTimeout(
+        () => reject(new Error("Timeout waiting for new page")),
+        5_000
+      ); // 10 seconds timeout
+
+      browser.once("targetcreated", async (target) => {
+        clearTimeout(timeout);
+        const page = await target.page();
+        resolve(page);
+      });
+    });
+    logger.debug("Waiting for new page...");
     const newPageC = await newPagePromise;
-    await newPageC.waitForFunction(() => document.readyState === "complete");
+    logger.debug("New page created...");
+    await newPageC.waitForFunction(() => document.readyState === "complete", { timeout: 10000 });
+    logger.debug("Document ready state complete...");
     await new Promise((resolve) => setTimeout(resolve, 2000));
     logger.info("New page opened...");
     const screenshotBuffer = await newPageC.screenshot({ encoding: "binary" });
@@ -516,6 +526,7 @@ const extractData = async (
     logger.info(`Extracting data...${realName}`);
     await page.waitForFunction(() => document.readyState === "complete");
     await new Promise((resolve) => setTimeout(resolve, 2000));
+    logger.debug("Waiting for selector...");
     await page.waitForSelector("#importeDJV1", {
       timeout: 5_000,
     });
