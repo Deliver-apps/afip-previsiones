@@ -137,7 +137,9 @@ const individualScraper = async ({
   } catch (error) {
     logger.error("An error occurred:", error.message);
     const seletedPage = newPage2 || newPage || page;
-    const screenshotBuffer = await seletedPage.screenshot({ encoding: "binary" });
+    const screenshotBuffer = await seletedPage.screenshot({
+      encoding: "binary",
+    });
     const fileName = `screenshots/screenshot-${Date.now()}.png`;
     await uploadToSpaces(screenshotBuffer, fileName);
 
@@ -348,6 +350,9 @@ const newDeclaration = async (page) => {
       }
     });
   } catch (error) {
+    const screenshotBuffer = await page.screenshot({ encoding: "binary" });
+    const fileName = `screenshots/screenshot-${Date.now()}.png`;
+    await uploadToSpaces(screenshotBuffer, fileName);
     console.log(error);
   }
 };
@@ -365,6 +370,9 @@ const getNewPage = async (browser) => {
     await new Promise((resolve) => setTimeout(resolve, 2000));
     return newPage;
   } catch (error) {
+    const screenshotBuffer = await newPage.screenshot({ encoding: "binary" });
+    const fileName = `screenshots/screenshot-${Date.now()}.png`;
+    await uploadToSpaces(screenshotBuffer, fileName);
     throw new Error("Failed to open new page: " + error.message);
   }
 };
@@ -386,6 +394,9 @@ const loginToAfip = async (page, username, password) => {
     logger.info("Clicking login button...");
     await page.click("#F1\\:btnIngresar");
   } catch (error) {
+    const screenshotBuffer = await page.screenshot({ encoding: "binary" });
+    const fileName = `screenshots/screenshot-${Date.now()}.png`;
+    await uploadToSpaces(screenshotBuffer, fileName);
     console.error("Login failed, retrying...", error.message);
     await retryWithDelay(page, "#F1\\:password", 3000);
   }
@@ -400,10 +411,16 @@ const navigateToPortalIVA = async (page) => {
       timeout: 6_000,
     });
     await page.type("#buscadorInput", "Portal iva");
-    await page.waitForFunction(() => document.readyState === "complete");
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const screenshotBuffer = await page.screenshot({ encoding: "binary" });
+    const fileName = `screenshots/screenshot-${Date.now()}.png`;
+    await uploadToSpaces(screenshotBuffer, fileName);
     await page.click("#rbt-menu-item-0");
+    await page.waitForFunction(() => document.readyState === "complete");
+    await new Promise((resolve) => setTimeout(resolve, 2000));
   } catch (error) {
+    const screenshotBuffer = await page.screenshot({ encoding: "binary" });
+    const fileName = `screenshots/screenshot-${Date.now()}.png`;
+    await uploadToSpaces(screenshotBuffer, fileName);
     throw new Error("Failed to navigate to Portal IVA: " + error.message);
   }
 };
@@ -460,6 +477,9 @@ const switchCompanyContext = async (page, cuitCompany) => {
       await page.goBack();
     }
   } catch (error) {
+    const screenshotBuffer = await page.screenshot({ encoding: "binary" });
+    const fileName = `screenshots/screenshot-${Date.now()}.png`;
+    await uploadToSpaces(screenshotBuffer, fileName);
     throw new Error("Failed to switch company context: " + error.message);
   }
 };
@@ -484,6 +504,9 @@ const checkAndValidatePeriod = async (page) => {
       'button[aria-label="Sin texto (iva.btn.home.validar.periodo.alt)"]'
     );
   } catch (error) {
+    const screenshotBuffer = await page.screenshot({ encoding: "binary" });
+    const fileName = `screenshots/screenshot-${Date.now()}.png`;
+    await uploadToSpaces(screenshotBuffer, fileName);
     throw new Error("Failed to validate period: " + error.message);
   }
 };
@@ -500,7 +523,7 @@ const extractData = async (
     logger.info(`Extracting data...${realName}`);
     await page.waitForFunction(() => document.readyState === "complete");
     await page.waitForSelector("#importeDJV1", {
-      timeout: 6_000,
+      timeout: 10_000,
     });
 
     const extractedData = await page.evaluate(() => {
@@ -538,6 +561,9 @@ const extractData = async (
       nameToShow: companyName || realName,
     };
   } catch (error) {
+    const screenshotBuffer = await page.screenshot({ encoding: "binary" });
+    const fileName = `screenshots/screenshot-${Date.now()}.png`;
+    await uploadToSpaces(screenshotBuffer, fileName);
     throw new Error("Failed to extract data: " + error.message);
   }
 };
@@ -550,6 +576,9 @@ const retryWithDelay = async (page, selector, delay) => {
       timeout: 6_000,
     });
   } catch (error) {
+    const screenshotBuffer = await page.screenshot({ encoding: "binary" });
+    const fileName = `screenshots/screenshot-${Date.now()}.png`;
+    await uploadToSpaces(screenshotBuffer, fileName);
     throw new Error("Retry failed: " + error.message);
   }
 };
