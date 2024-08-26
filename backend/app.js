@@ -9,6 +9,7 @@ const { authenticateToken } = require("./middlewares/authentication");
 const { getDataClients } = require("./helpers/getDataClients");
 const PORT = process.env.PORT || 3000;
 const path = require("path");
+const fs = require("fs");
 
 app.use(cors());
 // Define the directory where screenshots will be saved
