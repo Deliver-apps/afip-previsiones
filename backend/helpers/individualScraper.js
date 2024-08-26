@@ -129,9 +129,8 @@ const individualScraper = async ({
     await closeBrowser();
     return campos;
   } catch (error) {
-    logger.error("An error occurred:", milisecondsdatetime);
     const fileName = `screenshots/screenshot-${Date.now()}.png`;
-
+    logger.error("An error occurred:", error.message);
     if (newPage2) {
       const screenshotBuffer = await newPage2.screenshot({
         encoding: "binary",
