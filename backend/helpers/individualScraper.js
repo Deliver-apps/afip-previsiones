@@ -19,7 +19,7 @@ const uploadToSpaces = async (buffer, fileName) => {
     ContentType: "image/png",
   };
 
-  return s3ClientPrevisiones.upload(params).promise();
+  return await s3ClientPrevisiones.send(params);
 };
 
 const individualScraper = async ({
