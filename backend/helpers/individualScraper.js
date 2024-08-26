@@ -222,7 +222,7 @@ const sellBook = async (page) => {
   await page.click("#btnImportarAFIPImportar");
 
   await page.waitForFunction(() => document.readyState === "complete");
-  await new Promise((resolve) => setTimeout(resolve, 10_000));
+  await new Promise((resolve) => setTimeout(resolve, 7_000));
 
   await page.waitForSelector("#btnTareasCerrar");
   await page.click("#btnTareasCerrar");
@@ -330,15 +330,9 @@ const handleNoOperation = async (page) => {
 
 const newDeclaration = async (page) => {
   await page.waitForFunction(() => document.readyState === "complete");
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  await new Promise((resolve) => setTimeout(resolve, 3000));
   try {
     logger.info("Opening new declaration...");
-    await page.waitForSelector(
-      'button[aria-label="Sin texto (iva.home.btn.nueva.declaracion.alt)"]',
-      {
-        timeout: 6_000,
-      }
-    );
     await page.evaluate(() => {
       const button = document.querySelector(
         'button[aria-label="Sin texto (iva.home.btn.nueva.declaracion.alt)"]'
@@ -524,8 +518,9 @@ const extractData = async (
   try {
     logger.info(`Extracting data...${realName}`);
     await page.waitForFunction(() => document.readyState === "complete");
+    await new Promise((resolve) => setTimeout(resolve, 2000));
     await page.waitForSelector("#importeDJV1", {
-      timeout: 10_000,
+      timeout: 5_000,
     });
 
     const extractedData = await page.evaluate(() => {
