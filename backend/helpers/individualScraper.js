@@ -368,6 +368,10 @@ const getNewPage = async (browser) => {
     const newPage = await newPagePromise;
     await newPage.waitForFunction(() => document.readyState === "complete");
     await new Promise((resolve) => setTimeout(resolve, 2000));
+    logger.info("New page opened...");
+    const screenshotBuffer = await newPage.screenshot({ encoding: "binary" });
+    const fileName = `screenshots/screenshot-${Date.now()}.png`;
+    await uploadToSpaces(screenshotBuffer, fileName);
     return newPage;
   } catch (error) {
     const screenshotBuffer = await newPage.screenshot({ encoding: "binary" });
@@ -415,8 +419,6 @@ const navigateToPortalIVA = async (page) => {
     const fileName = `screenshots/screenshot-${Date.now()}.png`;
     await uploadToSpaces(screenshotBuffer, fileName);
     await page.click("#rbt-menu-item-0");
-    await page.waitForFunction(() => document.readyState === "complete");
-    await new Promise((resolve) => setTimeout(resolve, 2000));
   } catch (error) {
     const screenshotBuffer = await page.screenshot({ encoding: "binary" });
     const fileName = `screenshots/screenshot-${Date.now()}.png`;
