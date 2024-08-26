@@ -39,12 +39,17 @@ cron.schedule(
       for (const campos of data) {
         try {
           const result = await scrapeRoute.individualScraperWithTimeout(campos);
+          if (result.error) {
+            throw new Error(result.error);
+          }
           helper.push(result);
         } catch (error) {
           logger.error(error.message);
           responseFailed.push(campos);
           if (responseFailed.length > 8) {
-            logger.error("Fallaron muchas solicitudes, se cancela la generación");
+            logger.error(
+              "Fallaron muchas solicitudes, se cancela la generación"
+            );
             break;
           }
         }

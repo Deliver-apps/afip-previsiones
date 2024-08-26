@@ -31,6 +31,9 @@ router.post("/previsiones", async (req, res) => {
     for (const campos of data) {
       try {
         const result = await individualScraperWithTimeout(campos);
+        if (result.error) {
+          throw new Error(result.error);
+        }
         helper.push(result);
       } catch (error) {
         logger.error(error.message);
