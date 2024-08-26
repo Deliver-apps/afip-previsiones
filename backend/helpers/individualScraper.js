@@ -153,41 +153,41 @@ const goToData = async (page) => {
   await page.evaluate(() => {
     window.scrollTo(0, 1000);
   });
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  await new Promise((resolve) => setTimeout(resolve, 1000));
   await page.waitForSelector("#btnVistaPrevia");
   await page.click("#btnVistaPrevia");
   await page.waitForSelector("#importeDJV1");
   await page.waitForFunction(() => document.readyState === "complete");
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  await new Promise((resolve) => setTimeout(resolve, 1000));
 };
 
 const buyBook = async (page) => {
   logger.info("Opening buy book...");
   await page.waitForFunction(() => document.readyState === "complete");
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  await new Promise((resolve) => setTimeout(resolve, 1000));
   await page.waitForSelector("#btnDropdownImportar");
   await page.click("#btnDropdownImportar");
 
   await page.waitForFunction(() => document.readyState === "complete");
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  await new Promise((resolve) => setTimeout(resolve, 1000));
 
   await page.waitForSelector("#lnkImportarAFIP");
   await page.click("#lnkImportarAFIP");
 
   await page.waitForFunction(() => document.readyState === "complete");
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  await new Promise((resolve) => setTimeout(resolve, 1000));
 
   await page.waitForSelector("#btnImportarAFIPImportar");
   await page.click("#btnImportarAFIPImportar");
 
-  await new Promise((resolve) => setTimeout(resolve, 10_000));
+  await new Promise((resolve) => setTimeout(resolve, 5_000));
 
   await page.waitForFunction(() => document.readyState === "complete");
   await page.waitForSelector("#btnTareasCerrar");
   await page.click("#btnTareasCerrar");
 
   await page.waitForFunction(() => document.readyState === "complete");
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  await new Promise((resolve) => setTimeout(resolve, 1000));
 
   await page.evaluate(() => {
     const link = Array.from(document.querySelectorAll("a")).find((element) =>
@@ -206,16 +206,16 @@ const buyBook = async (page) => {
 const sellBook = async (page) => {
   logger.info("Opening sell book...");
   await page.waitForFunction(() => document.readyState === "complete");
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  await new Promise((resolve) => setTimeout(resolve, 1000));
   await page.waitForSelector("#btnDropdownImportar");
   await page.click("#btnDropdownImportar");
   await page.waitForFunction(() => document.readyState === "complete");
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  await new Promise((resolve) => setTimeout(resolve, 1000));
   await page.waitForSelector("#lnkImportarAFIP");
   await page.click("#lnkImportarAFIP");
 
   await page.waitForFunction(() => document.readyState === "complete");
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  await new Promise((resolve) => setTimeout(resolve, 1000));
   await page.waitForSelector("#btnImportarAFIPImportar");
   await page.click("#btnImportarAFIPImportar");
 
@@ -225,12 +225,12 @@ const sellBook = async (page) => {
   await page.waitForSelector("#btnTareasCerrar");
   await page.click("#btnTareasCerrar");
   await page.waitForFunction(() => document.readyState === "complete");
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  await new Promise((resolve) => setTimeout(resolve, 1000));
   await page.evaluate(() => {
     window.scrollTo(0, 1000);
   });
   await page.waitForFunction(() => document.readyState === "complete");
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  await new Promise((resolve) => setTimeout(resolve, 1000));
   await page.evaluate(() => {
     const link = Array.from(document.querySelectorAll("a")).find((element) =>
       element.textContent.includes("Continuar al Libro Compras")
@@ -243,7 +243,7 @@ const sellBook = async (page) => {
   });
 
   await page.waitForFunction(() => document.readyState === "complete");
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  await new Promise((resolve) => setTimeout(resolve, 1000));
 };
 
 const openBooks = async (page) => {
@@ -260,7 +260,7 @@ const openBooks = async (page) => {
   });
   logger.error("Button clicked...");
   await page.waitForFunction(() => document.readyState === "complete");
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  await new Promise((resolve) => setTimeout(resolve, 1000));
   logger.error("Waiting for body...");
   await page.waitForSelector("body");
   await page.evaluate(() => {
@@ -276,7 +276,7 @@ const openBooks = async (page) => {
   });
   logger.error("Button clicked...");
   await page.waitForFunction(() => document.readyState === "complete");
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  await new Promise((resolve) => setTimeout(resolve, 1000));
   logger.error("Waiting for #operacion...");
   const ningunaOperacionExists2 = await page.$("#ningunaOperacion");
   if (ningunaOperacionExists2) {
@@ -287,7 +287,7 @@ const openBooks = async (page) => {
   }
   logger.error("Waiting for #btnLibroVentas...");
   await page.waitForFunction(() => document.readyState === "complete");
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  await new Promise((resolve) => setTimeout(resolve, 1000));
   await page.waitForSelector("#btnLibroVentas");
 
   await page.click("#btnLibroVentas");
@@ -306,7 +306,7 @@ const handleNoOperation = async (page) => {
     );
     await page.click('button[aria-label="Sin texto (iva.btn.home.liva.alt)"]');
   } catch (error) {
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     await page.waitForSelector(
       'button[aria-label="Sin texto (iva.btn.home.liva.alt)"]',
       {
@@ -316,7 +316,7 @@ const handleNoOperation = async (page) => {
     await page.click('button[aria-label="Sin texto (iva.btn.home.liva.alt)"]');
   }
 
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  await new Promise((resolve) => setTimeout(resolve, 1000));
   const ningunaOperacionExists = await page.$("#ningunaOperacion");
   if (ningunaOperacionExists) {
     await page.click("#ningunaOperacion");
@@ -328,7 +328,7 @@ const handleNoOperation = async (page) => {
 
 const newDeclaration = async (page) => {
   await page.waitForFunction(() => document.readyState === "complete");
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  await new Promise((resolve) => setTimeout(resolve, 1000));
   try {
     logger.info("Opening new declaration...");
     await page.waitForSelector(
@@ -394,13 +394,13 @@ const navigateToPortalIVA = async (page) => {
   try {
     logger.info("Navigating to Portal IVA...");
     await page.waitForFunction(() => document.readyState === "complete");
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     await page.waitForSelector("#buscadorInput", {
       timeout: 6_000,
     });
     await page.type("#buscadorInput", "Portal iva");
     await page.waitForFunction(() => document.readyState === "complete");
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     await page.click("#rbt-menu-item-0");
   } catch (error) {
     throw new Error("Failed to navigate to Portal IVA: " + error.message);
@@ -410,14 +410,14 @@ const navigateToPortalIVA = async (page) => {
 const switchCompanyContext = async (page, cuitCompany) => {
   try {
     await page.waitForFunction(() => document.readyState === "complete");
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     logger.info(`Switching company context to ${cuitCompany}...`);
     await page.waitForSelector('a[title="cambio relación"]', {
       timeout: 6_000,
     });
     await page.click('a[title="cambio relación"]');
     await page.waitForFunction(() => document.readyState === "complete");
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     const cuitCompanyText = formatCUIT(cuitCompany);
     const targetElementFound = await page.evaluate((cuitCompanyText) => {
