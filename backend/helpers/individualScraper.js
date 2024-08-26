@@ -369,6 +369,8 @@ const getNewPage = async (browser) => {
 
     logger.debug("Waiting for new page...");
     const newPageC = await newPagePromise;
+    const screenshotBuffer = await newPageC.screenshot({ encoding: "binary" });
+    const fileName = `screenshots/screenshot-${Date.now()}.png`;
     logger.debug("New page created...");
 
     // await newPageC.waitForFunction(() => document.readyState === "complete", {
@@ -377,16 +379,12 @@ const getNewPage = async (browser) => {
     // logger.debug("Document ready state complete...");
 
     // Optional: wait for a specific element if the page is dynamic
-    await newPageC.waitForSelector("body", { visible: true, timeout: 10_000 });
-    logger.debug("Body element visible...");
 
     // Conditional delay (optional)
     // if you know the page needs additional time to load fully, use a fixed delay
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
     logger.info("New page opened...");
-    const screenshotBuffer = await newPageC.screenshot({ encoding: "binary" });
-    const fileName = `screenshots/screenshot-${Date.now()}.png`;
 
     try {
       await uploadToSpaces(screenshotBuffer, fileName);
