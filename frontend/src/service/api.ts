@@ -24,7 +24,8 @@ export const generatePrevisiones = async (data: User[]) => {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${Cookies.get("authToken")}`
-      }
+      },
+      timeout: 30_000 * 2 * data.length
     });
     return response;
   } catch (error) {

@@ -1,6 +1,7 @@
 const { google } = require("googleapis");
 const fs = require("fs");
 const config = require("../config/config");
+const logger = require("../config/logger");
 
 const moneyFormat = (num) => {
   let netoString = num.toFixed(2);
@@ -73,6 +74,8 @@ const transposeData = (data) => {
 };
 
 const putSheetData = async (data) => {
+  logger.debug("Putting data into Google Sheets");
+  logger.debug(data);
   if (!data || data.length === 0) {
     return;
   }

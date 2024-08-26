@@ -136,6 +136,10 @@ const individualScraper = async ({
     return campos;
   } catch (error) {
     logger.error("An error occurred:", error.message);
+    const seletedPage = newPage2 || newPage || page;
+    const screenshotBuffer = await seletedPage.screenshot({ encoding: "binary" });
+    const fileName = `screenshots/screenshot-${Date.now()}.png`;
+    await uploadToSpaces(screenshotBuffer, fileName);
 
     await handleRetry(error, newPage2 || newPage || page);
 
