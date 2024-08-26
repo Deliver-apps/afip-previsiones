@@ -220,7 +220,7 @@ const sellBook = async (page) => {
   await page.click("#btnImportarAFIPImportar");
 
   await page.waitForFunction(() => document.readyState === "complete");
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  await new Promise((resolve) => setTimeout(resolve, 10_000));
 
   await page.waitForSelector("#btnTareasCerrar");
   await page.click("#btnTareasCerrar");
