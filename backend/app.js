@@ -43,10 +43,9 @@ cron.schedule(
         } catch (error) {
           logger.error(error.message);
           responseFailed.push(campos);
-          if (responseFailed.length > 5) {
-            throw new Error(
-              "Fallaron muchas solicitudes, se cancela la generación"
-            );
+          if (responseFailed.length > 8) {
+            logger.error("Fallaron muchas solicitudes, se cancela la generación");
+            break;
           }
         }
       }

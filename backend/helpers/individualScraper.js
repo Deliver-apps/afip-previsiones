@@ -324,6 +324,7 @@ const handleNoOperation = async (page) => {
 
 const newDeclaration = async (page) => {
   await page.waitForFunction(() => document.readyState === "complete");
+  await new Promise((resolve) => setTimeout(resolve, 2000));
   try {
     logger.info("Opening new declaration...");
     await page.waitForSelector(
@@ -389,11 +390,13 @@ const navigateToPortalIVA = async (page) => {
   try {
     logger.info("Navigating to Portal IVA...");
     await page.waitForFunction(() => document.readyState === "complete");
+    await new Promise((resolve) => setTimeout(resolve, 2000));
     await page.waitForSelector("#buscadorInput", {
       timeout: 6_000,
     });
     await page.type("#buscadorInput", "Portal iva");
     await page.waitForFunction(() => document.readyState === "complete");
+    await new Promise((resolve) => setTimeout(resolve, 2000));
     await page.click("#rbt-menu-item-0");
   } catch (error) {
     throw new Error("Failed to navigate to Portal IVA: " + error.message);
@@ -403,12 +406,14 @@ const navigateToPortalIVA = async (page) => {
 const switchCompanyContext = async (page, cuitCompany) => {
   try {
     await page.waitForFunction(() => document.readyState === "complete");
+    await new Promise((resolve) => setTimeout(resolve, 2000));
     logger.info(`Switching company context to ${cuitCompany}...`);
     await page.waitForSelector('a[title="cambio relación"]', {
       timeout: 6_000,
     });
     await page.click('a[title="cambio relación"]');
     await page.waitForFunction(() => document.readyState === "complete");
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     const cuitCompanyText = formatCUIT(cuitCompany);
     const targetElementFound = await page.evaluate((cuitCompanyText) => {

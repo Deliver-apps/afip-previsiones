@@ -6,7 +6,7 @@ const logger = require("../config/logger");
 
 const router = express.Router();
 
-const individualScraperWithTimeout = async (campos, timeout = 120000) => {
+const individualScraperWithTimeout = async (campos, timeout = 200_000) => {
   return Promise.race([
     individualScraper(campos),
     new Promise((_, reject) =>
