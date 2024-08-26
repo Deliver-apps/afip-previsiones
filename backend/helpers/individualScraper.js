@@ -2,6 +2,7 @@ const puppeteer = require("puppeteer");
 const logger = require("../config/logger");
 const config = require("../config/config");
 const { s3ClientPrevisiones } = require("../digitalOceanClient");
+const { PutObjectCommand } = require("@aws-sdk/client-s3");
 
 const formatCUIT = (cuit) => {
   if (cuit.length !== 11) {
@@ -16,10 +17,9 @@ const uploadToSpaces = async (buffer, fileName) => {
     Key: fileName,
     Body: buffer,
     ACL: "public-read",
-    ContentType: "image/png",
   };
 
-  return await s3ClientPrevisiones.send(params);
+  return await s3ClientPrevisiones.send(new PutObjectCommand(params));
 };
 
 const individualScraper = async ({
