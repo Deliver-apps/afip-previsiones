@@ -371,10 +371,10 @@ const getNewPage = async (browser) => {
     const newPageC = await newPagePromise;
     logger.debug("New page created...");
 
-    await newPageC.waitForFunction(() => document.readyState === "complete", {
-      timeout: 10_000,
-    });
-    logger.debug("Document ready state complete...");
+    // await newPageC.waitForFunction(() => document.readyState === "complete", {
+    //   timeout: 10_000,
+    // });
+    // logger.debug("Document ready state complete...");
 
     // Optional: wait for a specific element if the page is dynamic
     await newPageC.waitForSelector("body", { visible: true, timeout: 10_000 });
