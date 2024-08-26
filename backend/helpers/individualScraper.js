@@ -2,6 +2,7 @@ const puppeteer = require("puppeteer");
 const logger = require("../config/logger");
 const config = require("../config/config");
 const path = require("path");
+const { screenshotDir } = require("../app");
 
 const formatCUIT = (cuit) => {
   if (cuit.length !== 11) {
@@ -121,7 +122,7 @@ const individualScraper = async ({
       await newPage2.screenshot({
         path: path.join(
           __dirname,
-          "screenshots",
+          screenshotDir,
           `screenshot-${milisecondsdatetime}.png`
         ),
       });
@@ -129,7 +130,7 @@ const individualScraper = async ({
       await newPage.screenshot({
         path: path.join(
           __dirname,
-          "screenshots",
+          screenshotDir,
           `screenshot-${milisecondsdatetime}.png`
         ),
       });
@@ -137,7 +138,7 @@ const individualScraper = async ({
       await page.screenshot({
         path: path.join(
           __dirname,
-          "screenshots",
+          screenshotDir,
           `screenshot-${milisecondsdatetime}.png`
         ),
       });

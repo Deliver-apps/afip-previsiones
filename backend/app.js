@@ -11,7 +11,14 @@ const PORT = process.env.PORT || 3000;
 const path = require("path");
 
 app.use(cors());
-app.use('/screenshots', express.static(path.join(__dirname, 'screenshots')));
+// Define the directory where screenshots will be saved
+const screenshotDir = path.join(__dirname, "helpers", "screenshots");
+
+// Ensure the directory exists, and if not, create it
+if (!fs.existsSync(screenshotDir)) {
+  fs.mkdirSync(screenshotDir, { recursive: true });
+}
+
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header(
@@ -71,3 +78,8 @@ app.use("/api/scrape", authenticateToken, scrapeRoute.router);
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+module.exports = {
+  app,
+  screenshotDir,
+};
