@@ -25,7 +25,10 @@ const individualScraper = async ({
       executablePath: config.nodeEnv
         ? config.chromeExecutablePath
         : puppeteer.executablePath(),
-      args: ["--no-sandbox", "--disable-setuid-sandbox", "--no-zygote", "--single-process"],
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+      ],
     });
   } catch (error) {
     throw new Error("Failed to launch browser: " + error.message);
@@ -59,6 +62,8 @@ const individualScraper = async ({
     await closeBrowser();
     throw error;
   };
+  let newPage;
+  let newPage2;
 
   try {
     // Navigate to the initial URL
@@ -67,7 +72,7 @@ const individualScraper = async ({
     await page.click("a.btn.btn-sm.btn-info.btn-block.uppercase");
 
     // Handle the new page that opens after clicking
-    const newPage = await getNewPage(browser);
+    newPage = await getNewPage(browser);
 
     await loginToAfip(newPage, username, password);
 
@@ -75,7 +80,7 @@ const individualScraper = async ({
     await navigateToPortalIVA(newPage);
 
     // Handle the new page that opens after clicking "Portal IVA"
-    const newPage2 = await getNewPage(browser);
+    newPage2 = await getNewPage(browser);
 
     // Handle company selection if applicable
     if (isCompany) {
@@ -110,7 +115,19 @@ const individualScraper = async ({
     await closeBrowser();
     return campos;
   } catch (error) {
-    return await handleRetry(error);
+    await handleRetry(error);
+    const milisecondsdatetime = new Date().getTime();
+
+    if(newPage2) {
+      await newPage2.screenshot({ path: `error-${milisecondsdatetime}.png` });
+    } else if(newPage) {
+      await newPage.screenshot({ path: `error-${milisecondsdatetime}.png` });
+    } else {
+      await page.screenshot({ path: `error-${milisecondsdatetime}.png` });
+    }
+      
+
+    return { error: error.message };
   }
 };
 

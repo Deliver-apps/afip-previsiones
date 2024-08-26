@@ -73,6 +73,9 @@ const transposeData = (data) => {
 };
 
 const putSheetData = async (data) => {
+  if (!data || data.length === 0) {
+    return;
+  }
   const credentials = JSON.parse(config.secretClient);
   const auth = new google.auth.GoogleAuth({
     credentials,
