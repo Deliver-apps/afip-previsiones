@@ -119,7 +119,6 @@ const putSheetData = async (data) => {
     },
   });
 
-  // Assuming camposArray is an array of campos JSON objects
   // const horizontalValues = [
   //   [
   //     "Representado",

@@ -108,7 +108,6 @@ const individualScraper = async ({
     }
 
     await newDeclaration(newPage2);
-    // await handleNoOperation(newPage2);
 
     // Validate the IVA declaration period
     await checkAndValidatePeriod(newPage2);
@@ -297,37 +296,6 @@ const openBooks = async (page) => {
   await new Promise((resolve) => setTimeout(resolve, 4000));
 };
 
-const handleNoOperation = async (page) => {
-  await page.waitForFunction(() => document.readyState === "complete");
-  try {
-    await page.waitForSelector(
-      'button[aria-label="Sin texto (iva.btn.home.liva.alt)"]',
-      {
-        timeout: 5000,
-      }
-    );
-    await page.click('button[aria-label="Sin texto (iva.btn.home.liva.alt)"]');
-  } catch (error) {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    await page.waitForSelector(
-      'button[aria-label="Sin texto (iva.btn.home.liva.alt)"]',
-      {
-        timeout: 5000,
-      }
-    );
-    await page.click('button[aria-label="Sin texto (iva.btn.home.liva.alt)"]');
-  }
-
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-  const ningunaOperacionExists = await page.$("#ningunaOperacion");
-  if (ningunaOperacionExists) {
-    await page.click("#ningunaOperacion");
-    await page.waitForSelector("#btnGuardar");
-
-    await page.click("#btnGuardar");
-  }
-};
-
 const newDeclaration = async (page) => {
   await page.waitForFunction(() => document.readyState === "complete");
   await new Promise((resolve) => setTimeout(resolve, 3000));
@@ -373,14 +341,6 @@ const getNewPage = async (browser) => {
     const fileName = `screenshots/screenshot-${Date.now()}.png`;
     logger.debug("New page created...");
 
-    // await newPageC.waitForFunction(() => document.readyState === "complete", {
-    //   timeout: 10_000,
-    // });
-    // logger.debug("Document ready state complete...");
-
-    // Optional: wait for a specific element if the page is dynamic
-
-    // Conditional delay (optional)
     // if you know the page needs additional time to load fully, use a fixed delay
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
@@ -519,7 +479,16 @@ const checkAndValidatePeriod = async (page) => {
     });
 
     if (optionsCount > 2) {
-      throw new Error("There is a previous period that hasn't been closed.");
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = (currentTime.getMonth() + 1).toString().padStart(2, "0");
+      const lastmonth = currentTime.getMonth().toString().padStart(2, "0");
+      const period = `${year}${lastmonth}`;
+      const selected = await page.select("#periodo", period);
+
+      if (selected.length === 0) {
+        await page.select("#periodo", `${year}${month}`);
+      }
     }
 
     await page.click(
