@@ -21,9 +21,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// cron.schedule(
-//   "*/3 * * * *",
-//   async () => {
 cron.schedule(
   "0 5 15,17,25,28 * *",
   async () => {

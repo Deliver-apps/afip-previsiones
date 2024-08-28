@@ -24,6 +24,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { showErrorToast, showSuccessToast } from "@src/helpers/toastifyCustom";
 import { generatePrevisiones } from "@src/service/api";
 import axios from "axios";
+import { CustomModal } from "../CustomModal";
 
 export type UsersTableProps = {};
 
@@ -45,6 +46,13 @@ const UsersTable: React.FC<UsersTableProps> = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loadingPrevisiones, setLoadingPrevisiones] = useState(false);
+  const [failedOpen, setFailedOpen] = useState(false);
+  const [descriptionModal, setDescriptionModal] = useState("");
+
+  const handleCloseModal = () => setFailedOpen(false);
+  const handleAcceptModal = () => {
+    setFailedOpen(false);
+  };
 
   const handleEditForm = (params: User) => {
     setOpen(true);
@@ -71,6 +79,13 @@ const UsersTable: React.FC<UsersTableProps> = () => {
     setShowPassword(!showPassword);
   };
 
+  const goToExcel = () => {
+    window.open(
+      "https://docs.google.com/spreadsheets/d/1kb04CjX9wC7k9Z8VBUydpqSoGnRfD4pnEaouVvrZ6rs/edit?pli=1&gid=281256569#gid=281256569",
+      "_blank"
+    );
+  };
+
   const handleGenerar = async () => {
     const filterBySelectedRows = (selectedRows: GridRowId[]) => {
       return users.filter((user) => selectedRows.includes(user.id));
@@ -79,13 +94,30 @@ const UsersTable: React.FC<UsersTableProps> = () => {
     showSuccessToast("Generando Previsiones...", "top-right", 4000);
 
     try {
-      await generatePrevisiones(filterBySelectedRows(selectedRows));
-
-      showSuccessToast(
-        "Previsiones generadas correctamente!",
-        "top-right",
-        4000
+      const response = await generatePrevisiones(
+        filterBySelectedRows(selectedRows)
       );
+      console.log("response", response);
+
+      if (response) {
+        showSuccessToast(
+          "Previsiones generadas correctamente!",
+          "top-right",
+          4000
+        );
+      } else {
+        showErrorToast("Error Generando las previsiones", "top-right", 4000);
+        setLoadingPrevisiones(false);
+      }
+
+      if (response?.data.failed.length > 0) {
+        const cuits = response?.data.failed.map((user: User) => user.username);
+        setDescriptionModal(
+          `Las siguientes previsiónes fallaron: ${cuits.join(", ")}`
+        );
+        setFailedOpen(true);
+      }
+
       setLoadingPrevisiones(false);
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -135,6 +167,15 @@ const UsersTable: React.FC<UsersTableProps> = () => {
           ) : (
             <PlayCircleFilledOutlined />
           )}
+        </Button>
+        <Button
+          sx={{
+            pb: 1.1,
+          }}
+          onClick={() => goToExcel()}
+        >
+          {" "}
+          Ir al Excel!
         </Button>
       </Box>
     );
@@ -301,6 +342,13 @@ const UsersTable: React.FC<UsersTableProps> = () => {
         handleEditUser={handleEditUser}
       />
       <ToastContainer />
+      <CustomModal
+        open={failedOpen}
+        onClose={handleCloseModal}
+        onAccept={handleAcceptModal}
+        title="Previsiones falladas"
+        description={descriptionModal}
+      />
     </>
   );
 };
