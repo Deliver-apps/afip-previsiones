@@ -28,11 +28,6 @@ router.post("/previsiones", async (req, res) => {
   const helper = [];
   const responseFailed = [];
   try {
-    res.json({
-      success: false,
-      waiting: true,
-      message: "Generando previsiones",
-    });
     for (const campos of data) {
       try {
         const result = await individualScraperWithTimeout(campos);
@@ -56,14 +51,12 @@ router.post("/previsiones", async (req, res) => {
       logger.error("Fallaron todas las solicitudes");
       return res.status(500).json({
         success: false,
-        waiting: false,
         message: "Fallaron todas las solicitudes",
       });
     }
 
     return res.json({
       success: true,
-      waiting: false,
       data: helper,
       failed: responseFailed,
     });
