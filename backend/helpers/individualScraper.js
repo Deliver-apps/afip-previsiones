@@ -337,22 +337,12 @@ const getNewPage = async (browser) => {
 
     logger.debug("Waiting for new page...");
     const newPageC = await newPagePromise;
-    const screenshotBuffer = await newPageC.screenshot({ encoding: "binary" });
-    const fileName = `screenshots/screenshot-${Date.now()}.png`;
     logger.debug("New page created...");
 
     // if you know the page needs additional time to load fully, use a fixed delay
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
     logger.info("New page opened...");
-
-    try {
-      await uploadToSpaces(screenshotBuffer, fileName);
-      logger.info("Screenshot uploaded successfully...");
-    } catch (uploadError) {
-      logger.error("Failed to upload screenshot:", uploadError);
-      throw new Error("Screenshot upload failed: " + uploadError.message);
-    }
 
     return newPageC;
   } catch (error) {
@@ -395,9 +385,6 @@ const navigateToPortalIVA = async (page) => {
       timeout: 6_000,
     });
     await page.type("#buscadorInput", "Portal iva");
-    const screenshotBuffer = await page.screenshot({ encoding: "binary" });
-    const fileName = `screenshots/screenshot-${Date.now()}.png`;
-    await uploadToSpaces(screenshotBuffer, fileName);
     await page.click("#rbt-menu-item-0");
   } catch (error) {
     const screenshotBuffer = await page.screenshot({ encoding: "binary" });
