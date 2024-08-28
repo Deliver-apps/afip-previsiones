@@ -23,6 +23,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { showErrorToast, showSuccessToast } from "@src/helpers/toastifyCustom";
 import { generatePrevisiones } from "@src/service/api";
+import axios from "axios";
 
 export type UsersTableProps = {};
 
@@ -75,24 +76,30 @@ const UsersTable: React.FC<UsersTableProps> = () => {
       return users.filter((user) => selectedRows.includes(user.id));
     };
     setLoadingPrevisiones(true);
-    const response = await generatePrevisiones(
-      filterBySelectedRows(selectedRows)
-    );
+    try {
+      await generatePrevisiones(filterBySelectedRows(selectedRows));
 
-    if (response?.status === 200) {
       showSuccessToast(
         "Previsiones generadas correctamente!",
         "top-right",
         4000
       );
-    } else {
-      showErrorToast(
-        response?.data.message || "Error en la Prevision",
-        "top-right",
-        4000
-      );
+      setLoadingPrevisiones(false);
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (error.code === "ECONNABORTED") {
+          console.error("Request timed out:", error.message);
+        } else {
+          console.error("An error occurred:", error.message);
+          showErrorToast(
+            "Error Generando la previsión en la Prevision",
+            "top-right",
+            4000
+          );
+          setLoadingPrevisiones(false);
+        }
+      }
     }
-    setLoadingPrevisiones(false);
   };
 
   const CustomToolbar = () => {
