@@ -33,8 +33,6 @@ cron.schedule(
     logger.debug("Data clients", data);
 
     const helper = [];
-    const responseFailed = [];
-
     try {
       for (const campos of data) {
         try {
@@ -45,13 +43,6 @@ cron.schedule(
           helper.push(result);
         } catch (error) {
           logger.error(error.message);
-          responseFailed.push(campos);
-          if (responseFailed.length > 8) {
-            logger.error(
-              "Fallaron muchas solicitudes, se cancela la generación"
-            );
-            break;
-          }
         }
       }
       await putSheetData(helper);

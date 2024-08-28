@@ -95,7 +95,12 @@ const putSheetData = async (data) => {
     })
   );
 
-  const formattedTime = `previsiones->${currentTime.getDay()}/${currentTime.getMonth()}->${currentTime.getHours()}:${currentTime.getMinutes()}hs`;
+  const day = currentTime.getDate().toString().padStart(2, "0");
+  const month = (currentTime.getMonth() + 1).toString().padStart(2, "0"); // getMonth() returns 0-based month
+  const minutes = currentTime.getMinutes().toString().padStart(2, "0");
+  const formattedDate = `${day}/${month}`;
+
+  const formattedTime = `previsiones->${formattedDate}->${currentTime.getHours()}:${minutes}hs`;
 
   // Create new sheet at the first position (index 0)
   await sheets.spreadsheets.batchUpdate({
