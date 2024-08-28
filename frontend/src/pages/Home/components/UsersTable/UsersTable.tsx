@@ -76,6 +76,8 @@ const UsersTable: React.FC<UsersTableProps> = () => {
       return users.filter((user) => selectedRows.includes(user.id));
     };
     setLoadingPrevisiones(true);
+    showSuccessToast("Generando Previsiones...", "top-right", 4000);
+
     try {
       await generatePrevisiones(filterBySelectedRows(selectedRows));
 
@@ -98,6 +100,14 @@ const UsersTable: React.FC<UsersTableProps> = () => {
           );
           setLoadingPrevisiones(false);
         }
+      } else {
+        console.error("An error occurred:", error);
+        showErrorToast(
+          "Error en la consulta a la API de la Prevision",
+          "top-right",
+          4000
+        );
+        setLoadingPrevisiones(false);
       }
     }
   };
@@ -115,6 +125,9 @@ const UsersTable: React.FC<UsersTableProps> = () => {
         <Button
           disabled={selectedRows.length <= 0 || loadingPrevisiones}
           onClick={handleGenerar}
+          sx={{
+            pb: 1.1,
+          }}
         >
           Generar Previsiones
           {loadingPrevisiones ? (
@@ -132,6 +145,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
       field: "id",
       headerName: "id",
       width: 100,
+      flex: 1,
       filterable: false,
       disableColumnMenu: true,
       sortable: false,
@@ -140,6 +154,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
       field: "username",
       headerName: "CUIT",
       width: 130,
+      flex: 1,
       sortable: false,
       disableColumnMenu: true,
     },
@@ -148,6 +163,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
       headerName: "Contraseña",
       sortable: false,
       width: 130,
+      flex: 1,
       renderCell: (params) => {
         return (
           <div style={{ display: "flex", alignItems: "center" }}>
@@ -160,8 +176,8 @@ const UsersTable: React.FC<UsersTableProps> = () => {
                 event?.stopPropagation();
                 handleClickShowPassword();
               }}
-              size="small" // Adjust the size to fit better in the cell
-              style={{ padding: 0 }} // Remove padding for better alignment
+              size="small"
+              style={{ padding: 0 }}
             >
               {showPassword ? (
                 <VisibilityOff fontSize="small" />
@@ -179,6 +195,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
       field: "is_company",
       headerName: "¿Es Empresa?",
       width: 130,
+      flex: 1,
       renderCell: (params) => (params.value ? "Si" : "No"),
       align: "center",
       sortable: false,
@@ -189,6 +206,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
       field: "company_name",
       headerName: "Nombre Empresa",
       width: 200,
+      flex: 2,
       disableColumnMenu: true,
       sortable: false,
     },
@@ -196,6 +214,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
       field: "real_name",
       headerName: "Persona Física",
       width: 200,
+      flex: 2,
       disableColumnMenu: true,
       sortable: false,
     },
@@ -203,6 +222,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
       field: "cuit_company",
       headerName: "Cuit Empresa",
       width: 130,
+      flex: 1,
       sortable: false,
       disableColumnMenu: true,
     },
@@ -211,6 +231,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
       headerName: "Acciones",
       sortable: false,
       width: 130,
+      flex: 1,
       renderCell: (params) => (
         <Button
           onClick={(event) => {
@@ -225,6 +246,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
       disableColumnMenu: true,
     },
   ];
+
   const handleSelectionChange = (newSelection: GridRowSelectionModel) => {
     console.log(newSelection);
     setSelectedRows([...newSelection]);
