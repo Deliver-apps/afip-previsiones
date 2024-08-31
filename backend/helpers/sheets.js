@@ -18,17 +18,16 @@ const stringToNumber = (str) => {
 };
 
 const calculateResult = (campos) => {
-  const ventasDebito = stringToNumber(campos.ventas.operaciones.debito);
-  const ventasCreditoDebito = stringToNumber(
-    campos.ventas.notasDeCredito.debito
-  );
-  const comprasDebito = stringToNumber(campos.compras.operaciones.debito);
-  const comprasCreditoDebito = stringToNumber(
-    campos.compras.notasDeCredito.debito
-  );
+  const ventasIVA =
+    stringToNumber(campos.ventas.operaciones.debito) -
+    stringToNumber(campos.ventas.notasDeCredito.debito);
 
-  const result =
-    ventasDebito - ventasCreditoDebito - comprasDebito - comprasCreditoDebito;
+  const comprasIVA =
+    stringToNumber(campos.compras.operaciones.debito) -
+    stringToNumber(campos.compras.notasDeCredito.debito);
+
+  const result = ventasIVA - comprasIVA;
+
   const estado = result < 0 ? "A Favor" : "A Pagar";
 
   return { result, estado };
@@ -181,10 +180,8 @@ const putSheetData = async (data) => {
 
   // Define the vertical table data with some blank rows for spacing
   const allVerticalValues = data.map((campos) => {
-    const { result } = calculateResult(campos);
+    const { result, estado } = calculateResult(campos);
     const formattedMoneyFields = formatMoneyFields(campos);
-
-    const columnHeader = result > 0 ? "A Pagar" : "A Favor";
 
     return [
       ["Razón Social", campos.nameToShow],
@@ -195,7 +192,7 @@ const putSheetData = async (data) => {
       ["Compras Neto", formattedMoneyFields.comprasNeto],
       ["Compras IVA", formattedMoneyFields.comprasIVA],
       ["Compras Total", formattedMoneyFields.comprasTotal],
-      [columnHeader, moneyFormat(result)],
+      [estado, moneyFormat(result)],
     ];
   });
 

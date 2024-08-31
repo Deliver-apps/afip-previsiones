@@ -22,7 +22,6 @@ const App: React.FC = () => {
       try {
         const { data, error } = await supabase.auth.getUser(token!);
         if (data && !error) {
-          console.log(data);
           setIsAuthenticated(true);
         } else {
           setIsAuthenticated(false);

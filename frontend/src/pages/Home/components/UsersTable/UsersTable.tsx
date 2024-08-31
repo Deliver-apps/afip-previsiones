@@ -62,7 +62,6 @@ const UsersTable: React.FC<UsersTableProps> = () => {
   const handleEditUser = (user: User) => {
     try {
       dispatch(editUser(user));
-      console.log("User edited successfully");
       showSuccessToast("Usuario editado correctamente!", "top-right", 4000);
       dispatch(modifyState(user));
     } catch (error) {
@@ -90,35 +89,44 @@ const UsersTable: React.FC<UsersTableProps> = () => {
     const filterBySelectedRows = (selectedRows: GridRowId[]) => {
       return users.filter((user) => selectedRows.includes(user.id));
     };
+
     setLoadingPrevisiones(true);
     showSuccessToast("Generando Previsiones...", "top-right", 4000);
 
     try {
-      const response = await generatePrevisiones(
-        filterBySelectedRows(selectedRows)
-      );
-      console.log("response", response);
+      const filteredUsers = filterBySelectedRows(selectedRows);
+      const response = await generatePrevisiones(filteredUsers);
 
-      if (response) {
+      if (axios.isAxiosError(response)) {
+        if (response.code === "ECONNABORTED") {
+          console.error("Request timed out:", response.message);
+        } else {
+          setLoadingPrevisiones(false);
+
+          console.error("An error occurred:", response.message);
+          showErrorToast(
+            "Error Generando la previsión en la Prevision",
+            "top-right",
+            4000
+          );
+        }
+      } else {
+        setLoadingPrevisiones(false);
+
         showSuccessToast(
           "Previsiones generadas correctamente!",
           "top-right",
           4000
         );
-      } else {
-        showErrorToast("Error Generando las previsiones", "top-right", 4000);
-        setLoadingPrevisiones(false);
-      }
 
-      if (response?.data.failed.length > 0) {
-        const cuits = response?.data.failed.map((user: User) => user.username);
-        setDescriptionModal(
-          `Las siguientes previsiónes fallaron: ${cuits.join(", ")}`
-        );
-        setFailedOpen(true);
+        if (response.data.failed.length > 0) {
+          const cuits = response.data.failed.map((user: User) => user.username);
+          setDescriptionModal(
+            `Las siguientes previsiónes fallaron: ${cuits.join(", ")}`
+          );
+          setFailedOpen(true);
+        }
       }
-
-      setLoadingPrevisiones(false);
     } catch (error) {
       if (axios.isAxiosError(error)) {
         if (error.code === "ECONNABORTED") {
@@ -130,17 +138,16 @@ const UsersTable: React.FC<UsersTableProps> = () => {
             "top-right",
             4000
           );
-          setLoadingPrevisiones(false);
         }
       } else {
-        console.error("An error occurred:", error);
+        console.error("An unexpected error occurred:", error);
         showErrorToast(
           "Error en la consulta a la API de la Prevision",
           "top-right",
           4000
         );
-        setLoadingPrevisiones(false);
       }
+      setLoadingPrevisiones(false);
     }
   };
 
@@ -289,7 +296,6 @@ const UsersTable: React.FC<UsersTableProps> = () => {
   ];
 
   const handleSelectionChange = (newSelection: GridRowSelectionModel) => {
-    console.log(newSelection);
     setSelectedRows([...newSelection]);
   };
   useEffect(() => {

@@ -1,7 +1,7 @@
 const apiUrl = import.meta.env.VITE_API_URL;
 const afipUrl = import.meta.env.VITE_AFIP_URL;
 import { User } from "@src/models";
-import axios from "axios";
+import axios, { AxiosError, AxiosResponse } from "axios";
 import Cookies from "js-cookie";
 
 // export const generateComprobanteReq = async (data) => {
@@ -15,20 +15,35 @@ import Cookies from "js-cookie";
 //   }
 // };
 
-export const generatePrevisiones = async (data: User[]) => {
+interface ResponsePrevisiones {
+  sucess: boolean;
+  failed: User[];
+  data: User[];
+}
+
+export const generatePrevisiones = async (
+  data: User[]
+): Promise<AxiosResponse<ResponsePrevisiones> | AxiosError> => {
   try {
-    console.log("data", data);
-    const response = await axios.post(`${apiUrl}api/scrape/previsiones`, {
-      data,
-    }, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${Cookies.get("authToken")}`
+    const response = await axios.post(
+      `${apiUrl}api/scrape/previsiones`,
+      {
+        data,
       },
-      timeout: 30_000 * 2 * data.length
-    });
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${Cookies.get("authToken")}`,
+        },
+        timeout: 30_000 * 2 * data.length,
+      }
+    );
     return response;
   } catch (error) {
-    console.error("Error generating previsiones:", error);
+    if (axios.isAxiosError(error)) {
+      return error;
+    }
+
+    return error as AxiosError;
   }
 };

@@ -22,7 +22,7 @@ app.use((req, res, next) => {
 });
 
 cron.schedule(
-  "0 5 15,17,25,28,30 * *",
+  "0 5 15,17,25,28,30,31 * *",
   async () => {
     logger.debug("Running cron job");
 

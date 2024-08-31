@@ -16,7 +16,6 @@ const CustomModal: React.FC<CustomModalProps> = ({
   title,
   description,
 }) => {
-	console.log("CustomModalProps", "CARGUEEEEEEEEEEEEEEEEEEE");
   return (
     <Modal
       open={open}
