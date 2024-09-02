@@ -468,8 +468,8 @@ const checkAndValidatePeriod = async (page) => {
     if (optionsCount > 2) {
       const today = new Date();
       const year = today.getFullYear();
-      const month = (currentTime.getMonth() + 1).toString().padStart(2, "0");
-      const lastmonth = currentTime.getMonth().toString().padStart(2, "0");
+      const month = (today.getMonth() + 1).toString().padStart(2, "0");
+      const lastmonth = today.getMonth().toString().padStart(2, "0");
       const period = `${year}${lastmonth}`;
       const selected = await page.select("#periodo", period);
 
