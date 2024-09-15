@@ -38,15 +38,15 @@ const individualScraper = async ({
   try {
     browser = await puppeteer.launch({
       headless: true,
-      // executablePath: config.nodeEnv
-      //   ? config.chromeExecutablePath
-      //   : puppeteer.executablePath(),
-      // args: [
-      //   "--no-sandbox",
-      //   "--disable-setuid-sandbox",
-      //   "--single-process",
-      //   "--no-zygote",
-      // ],
+      executablePath: config.nodeEnv
+        ? config.chromeExecutablePath
+        : puppeteer.executablePath(),
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--single-process",
+        "--no-zygote",
+      ],
     });
   } catch (error) {
     throw new Error("Failed to launch browser: " + error.message);
