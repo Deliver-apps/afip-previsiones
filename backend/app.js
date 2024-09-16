@@ -16,13 +16,13 @@ app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header(
     "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept"
+    "Origin, X-Requested-With, Content-Type, Accept",
   );
   next();
 });
 
 cron.schedule(
-  "0 5 15,17,25,28,30,31 * *",
+  "0 5 15,16,17,25,28,30,31 * *",
   async () => {
     logger.debug("Running cron job");
 
@@ -55,7 +55,7 @@ cron.schedule(
   {
     scheduled: true,
     timezone: "America/Argentina/Buenos_Aires", // You can set your timezone here
-  }
+  },
 );
 
 app.use(express.json());
