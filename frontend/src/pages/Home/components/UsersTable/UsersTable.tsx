@@ -81,7 +81,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
   const goToExcel = () => {
     window.open(
       "https://docs.google.com/spreadsheets/d/1kb04CjX9wC7k9Z8VBUydpqSoGnRfD4pnEaouVvrZ6rs/edit?pli=1&gid=281256569#gid=281256569",
-      "_blank"
+      "_blank",
     );
   };
 
@@ -96,9 +96,17 @@ const UsersTable: React.FC<UsersTableProps> = () => {
     try {
       const filteredUsers = filterBySelectedRows(selectedRows);
       const response = await generatePrevisiones(filteredUsers);
-
+      console.log("RESPONSE", response);
       if (axios.isAxiosError(response)) {
         if (response.code === "ECONNABORTED") {
+          if (filteredUsers.length === 1) {
+            showSuccessToast(
+              "Previsiones generadas correctamente!",
+              "top-right",
+              4000,
+            );
+            setLoadingPrevisiones(false);
+          }
           console.error("Request timed out:", response.message);
         } else {
           setLoadingPrevisiones(false);
@@ -107,22 +115,23 @@ const UsersTable: React.FC<UsersTableProps> = () => {
           showErrorToast(
             "Error Generando la previsión en la Prevision",
             "top-right",
-            4000
+            4000,
           );
         }
       } else {
+        console.log("TERMIN");
         setLoadingPrevisiones(false);
 
         showSuccessToast(
           "Previsiones generadas correctamente!",
           "top-right",
-          4000
+          4000,
         );
 
         if (response.data.failed.length > 0) {
           const cuits = response.data.failed.map((user: User) => user.username);
           setDescriptionModal(
-            `Las siguientes previsiónes fallaron: ${cuits.join(", ")}`
+            `Las siguientes previsiónes fallaron: ${cuits.join(", ")}`,
           );
           setFailedOpen(true);
         }
@@ -136,7 +145,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
           showErrorToast(
             "Error Generando la previsión en la Prevision",
             "top-right",
-            4000
+            4000,
           );
         }
       } else {
@@ -144,7 +153,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
         showErrorToast(
           "Error en la consulta a la API de la Prevision",
           "top-right",
-          4000
+          4000,
         );
       }
       setLoadingPrevisiones(false);
