@@ -36,17 +36,19 @@ const individualScraper = async ({
   let newPage;
   let newPage2;
   try {
+    console.log("Launching browser...");
     browser = await puppeteer.launch({
-      headless: true,
-      executablePath: config.nodeEnv
-        ? config.chromeExecutablePath
-        : puppeteer.executablePath(),
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--single-process",
-        "--no-zygote",
-      ],
+      headless: false,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      // executablePath: config.nodeEnv
+      //   ? config.chromeExecutablePath
+      //   : puppeteer.executablePath(),
+      // args: [
+      //   "--no-sandbox",
+      //   "--disable-setuid-sandbox",
+      //   "--single-process",
+      //   "--no-zygote",
+      // ],
     });
   } catch (error) {
     throw new Error("Failed to launch browser: " + error.message);
@@ -127,7 +129,7 @@ const individualScraper = async ({
       username,
       isCompany,
       companyName,
-      realName
+      realName,
     );
 
     // Close the browser and return the extracted data
@@ -192,7 +194,7 @@ const buyBook = async (page) => {
 
   await page.evaluate(() => {
     const link = Array.from(document.querySelectorAll("a")).find((element) =>
-      element.textContent.includes("Volver al Libro")
+      element.textContent.includes("Volver al Libro"),
     );
     if (link) {
       link.click();
@@ -234,7 +236,7 @@ const sellBook = async (page) => {
   await new Promise((resolve) => setTimeout(resolve, 1000));
   await page.evaluate(() => {
     const link = Array.from(document.querySelectorAll("a")).find((element) =>
-      element.textContent.includes("Continuar al Libro Compras")
+      element.textContent.includes("Continuar al Libro Compras"),
     );
     if (link) {
       link.click();
@@ -253,7 +255,7 @@ const openBooks = async (page) => {
   logger.error("Waiting for button...");
   await page.evaluate(async () => {
     const button = document.querySelector(
-      'button[aria-label="Sin texto (iva.home.btn.nueva.declaracion.alt)"]'
+      'button[aria-label="Sin texto (iva.home.btn.nueva.declaracion.alt)"]',
     );
     if (button) {
       button.click();
@@ -266,7 +268,7 @@ const openBooks = async (page) => {
   await page.waitForSelector("body");
   await page.evaluate(() => {
     const button = document.querySelector(
-      'button[aria-label="Sin texto (iva.btn.home.liva.alt)"]'
+      'button[aria-label="Sin texto (iva.btn.home.liva.alt)"]',
     );
     if (button) {
       button.click();
@@ -303,7 +305,7 @@ const newDeclaration = async (page) => {
     logger.info("Opening new declaration...");
     await page.evaluate(() => {
       const button = document.querySelector(
-        'button[aria-label="Sin texto (iva.home.btn.nueva.declaracion.alt)"]'
+        'button[aria-label="Sin texto (iva.home.btn.nueva.declaracion.alt)"]',
       );
       if (button) {
         button.click();
@@ -325,7 +327,7 @@ const getNewPage = async (browser) => {
     const newPagePromise = new Promise((resolve, reject) => {
       const timeout = setTimeout(
         () => reject(new Error("Timeout waiting for new page")),
-        10_000 // Increased timeout for new page creation
+        10_000, // Increased timeout for new page creation
       );
 
       browser.once("targetcreated", async (target) => {
@@ -409,10 +411,10 @@ const switchCompanyContext = async (page, cuitCompany) => {
     const cuitCompanyText = formatCUIT(cuitCompany);
     const targetElementFound = await page.evaluate((cuitCompanyText) => {
       const elements = Array.from(
-        document.querySelectorAll("div.media-body h3")
+        document.querySelectorAll("div.media-body h3"),
       );
       const targetElement = elements.find((el) =>
-        el.textContent.includes(cuitCompanyText)
+        el.textContent.includes(cuitCompanyText),
       );
       if (targetElement) {
         targetElement.click();
@@ -431,10 +433,10 @@ const switchCompanyContext = async (page, cuitCompany) => {
       });
       await page.evaluate((cuitCompanyText) => {
         const elements = Array.from(
-          document.querySelectorAll("div.media-body h3")
+          document.querySelectorAll("div.media-body h3"),
         );
         const targetElement = elements.find((el) =>
-          el.textContent.includes(cuitCompanyText)
+          el.textContent.includes(cuitCompanyText),
         );
         if (targetElement) {
           targetElement.click();
@@ -479,7 +481,7 @@ const checkAndValidatePeriod = async (page) => {
     }
 
     await page.click(
-      'button[aria-label="Sin texto (iva.btn.home.validar.periodo.alt)"]'
+      'button[aria-label="Sin texto (iva.btn.home.validar.periodo.alt)"]',
     );
   } catch (error) {
     const screenshotBuffer = await page.screenshot({ encoding: "binary" });
@@ -495,7 +497,7 @@ const extractData = async (
   username,
   isCompany,
   companyName,
-  realName
+  realName,
 ) => {
   try {
     logger.info(`Extracting data...${realName}`);

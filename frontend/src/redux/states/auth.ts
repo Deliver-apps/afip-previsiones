@@ -15,7 +15,7 @@ export const login = createAsyncThunk(
       model: string;
       type?: string;
     }[],
-    thunkAPI
+    thunkAPI,
   ) => {
     try {
       // Extract email and password from formFields array
@@ -42,10 +42,10 @@ export const login = createAsyncThunk(
     } catch (error: any) {
       // Handle unexpected errors
       return thunkAPI.rejectWithValue(
-        error.message || "An unexpected error occurred"
+        error.message || "An unexpected error occurred",
       );
     }
-  }
+  },
 );
 
 const authSlice = createSlice({

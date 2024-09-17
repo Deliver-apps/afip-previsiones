@@ -22,8 +22,8 @@ import { EditForm } from "../EditForm";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { showErrorToast, showSuccessToast } from "@src/helpers/toastifyCustom";
-import { generatePrevisiones } from "@src/service/api";
-import axios from "axios";
+import { checkJobStatus, generatePrevisiones } from "@src/service/api";
+import { isAxiosError } from "axios";
 import { CustomModal } from "../CustomModal";
 
 export type UsersTableProps = {};
@@ -48,6 +48,53 @@ const UsersTable: React.FC<UsersTableProps> = () => {
   const [loadingPrevisiones, setLoadingPrevisiones] = useState(false);
   const [failedOpen, setFailedOpen] = useState(false);
   const [descriptionModal, setDescriptionModal] = useState("");
+  const [jobId, setJobId] = useState(0);
+  const [timeExpected, setTimeExpected] = useState(0);
+  const [isActiveInterval, setIsActiveInterval] = useState(false);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    if (isActiveInterval) {
+      console.log("Intervalo activo")
+      interval = setInterval(async () => {
+        const checked = await checkJobStatus(jobId);
+        console.log("Intervalo ejecutado")
+        if (isAxiosError(checked)) {
+          console.error("Error checking job status:", checked);
+          showErrorToast(
+            "Error en la consulta a la API de la Prevision",
+            "top-right",
+            4000
+          )
+          setFailedOpen(true);
+          setIsActiveInterval(false);
+          setLoadingPrevisiones(false);
+        } else if (checked.data.state === 'finished') {
+            setIsActiveInterval(false);
+            setLoadingPrevisiones(false);
+            showSuccessToast(
+              "Previsiones generadas correctamente",
+              "top-right",
+              4000
+            );
+          }
+      }, timeExpected);
+      console.log("Intervalo creado")
+    } else if (interval !== null) {
+      console.log("Intervalo desactivado")
+      clearInterval(interval);
+      setLoadingPrevisiones(false);
+    }
+  
+    // Cleanup function to clear interval when component unmounts or dependency changes
+    return () => {
+      if (interval !== null) {
+        clearInterval(interval);
+        setLoadingPrevisiones(false);
+      }
+    };
+  }, [isActiveInterval]);  // Add timeExpected as a dependency
+  
 
   const handleCloseModal = () => setFailedOpen(false);
   const handleAcceptModal = () => {
@@ -96,66 +143,34 @@ const UsersTable: React.FC<UsersTableProps> = () => {
     try {
       const filteredUsers = filterBySelectedRows(selectedRows);
       const response = await generatePrevisiones(filteredUsers);
-      console.log("RESPONSE", response);
-      if (axios.isAxiosError(response)) {
-        if (response.code === "ECONNABORTED") {
-          if (filteredUsers.length === 1) {
-            showSuccessToast(
-              "Previsiones generadas correctamente!",
-              "top-right",
-              4000,
-            );
-            setLoadingPrevisiones(false);
-          }
-          console.error("Request timed out:", response.message);
-        } else {
-          setLoadingPrevisiones(false);
-
-          console.error("An error occurred:", response.message);
-          showErrorToast(
-            "Error Generando la previsión en la Prevision",
-            "top-right",
-            4000,
-          );
-        }
-      } else {
-        console.log("TERMIN");
-        setLoadingPrevisiones(false);
-
-        showSuccessToast(
-          "Previsiones generadas correctamente!",
+      console.log(response)
+      if(isAxiosError(response)) {
+        showErrorToast(
+          "Error en la consulta a la API de la Prevision",
           "top-right",
           4000,
         );
 
-        if (response.data.failed.length > 0) {
-          const cuits = response.data.failed.map((user: User) => user.username);
-          setDescriptionModal(
-            `Las siguientes previsiónes fallaron: ${cuits.join(", ")}`,
-          );
-          setFailedOpen(true);
-        }
-      }
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        if (error.code === "ECONNABORTED") {
-          console.error("Request timed out:", error.message);
-        } else {
-          console.error("An error occurred:", error.message);
-          showErrorToast(
-            "Error Generando la previsión en la Prevision",
-            "top-right",
-            4000,
-          );
-        }
       } else {
+        console.log("NOt error")
+        setJobId(response.data.jobId);
+        setTimeExpected(response.data.usersLength * 100_000);
+        setIsActiveInterval(true);
+        showSuccessToast(
+          "Iniciando consulta de usuarios",
+          "top-right",
+          4000
+        )
+      }
+      
+    } catch (error) {
         console.error("An unexpected error occurred:", error);
         showErrorToast(
           "Error en la consulta a la API de la Prevision",
           "top-right",
           4000,
         );
-      }
+      
       setLoadingPrevisiones(false);
     }
   };

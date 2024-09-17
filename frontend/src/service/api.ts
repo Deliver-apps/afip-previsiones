@@ -17,8 +17,37 @@ import Cookies from "js-cookie";
 
 interface ResponsePrevisiones {
   sucess: boolean;
-  failed: User[];
-  data: User[];
+  jobId: number;
+  usersLength: number;
+}
+
+interface ResponseJob {
+  id: number;
+  state: string;
+  result: string;
+}
+
+export const checkJobStatus = async (
+  jobId: number
+): Promise<AxiosResponse<ResponseJob> | AxiosError> => {
+  try {
+    const response = await axios.get(
+      `${apiUrl}api/scrape/previsiones/job/${jobId}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${Cookies.get("authToken")}`,
+        },
+      }
+    );
+    return response;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      return error;
+    }
+
+    return error as AxiosError;
+  }
 }
 
 export const generatePrevisiones = async (
