@@ -1,4 +1,4 @@
-# Use a Puppeteer base image
+# Use a proper base image compatible with Puppeteer
 FROM ghcr.io/puppeteer/puppeteer:23.0.2
 
 # Set environment variables
@@ -41,8 +41,8 @@ RUN apt-get update && \
     libxslt1.1 \
     dbus-x11 \
     --no-install-recommends && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* && \
+    apt-get clean
 
 # Switch back to non-root user
 USER pptruser
@@ -64,8 +64,9 @@ COPY . .
 # Compile TypeScript to JavaScript
 RUN tsc
 
-# Set up environment for headless Chrome
+# Configure environment for Puppeteer
 ENV DISPLAY=:99
+ENV CHROME_BIN=/usr/bin/google-chrome-stable
 
 # Command to run the application
 CMD ["node", "dist/index.js"]
