@@ -15,7 +15,7 @@ COPY ./previsiones/package*.json ./
 RUN npm install
 
 # Copy the rest of the application code
-COPY ./previsiones ./
+COPY ./backend/previsiones ./
 
 # Compile TypeScript to JavaScript
 RUN npm run build
@@ -32,7 +32,7 @@ COPY ./facturador/package*.json ./
 RUN npm install
 
 # Copy the rest of the application code
-COPY ./facturador ./
+COPY ./backend/facturador ./
 
 # Compile TypeScript to JavaScript
 RUN npm run build
