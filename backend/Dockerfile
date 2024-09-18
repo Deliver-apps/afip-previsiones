@@ -1,22 +1,8 @@
-# Use a proper base image compatible with Puppeteer
-FROM ghcr.io/puppeteer/puppeteer:23.0.2
+# Use an official node slim image
+FROM node:16-slim
 
-# Set environment variables
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
-
-# Set the working directory
-WORKDIR /usr/src/app
-
-# Expose the application port
-EXPOSE 3000
-
-# Switch to root user to install necessary packages
-USER root
-
-# Install dependencies required for running Chrome in headless mode
-RUN apt-get update && \
-    apt-get install -y \
+# Install necessary packages and dependencies for puppeteer
+RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
     ca-certificates \
@@ -40,23 +26,24 @@ RUN apt-get update && \
     libxshmfence1 \
     libxslt1.1 \
     dbus-x11 \
-    --no-install-recommends && \
-    rm -rf /var/lib/apt/lists/* && \
-    apt-get clean
+    --no-install-recommends \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Switch back to non-root user
-USER pptruser
+# Install Chromium (Puppeteer's bundled Chromium)
+RUN npm install -g puppeteer --unsafe-perm --allow-root
 
-# Copy package.json and package-lock.json files
+# Set the working directory
+WORKDIR /usr/src/app
+
+# Copy package.json and package-lock.json
 COPY package*.json ./
 
-# Install npm dependencies with unsafe-perm
+# Install npm dependencies
 RUN npm install --unsafe-perm
 
-# Install TypeScript globally as root
-USER root
+# Install TypeScript globally
 RUN npm install -g typescript --unsafe-perm
-USER pptruser
 
 # Copy the rest of the application code
 COPY . .
@@ -64,9 +51,12 @@ COPY . .
 # Compile TypeScript to JavaScript
 RUN tsc
 
-# Configure environment for Puppeteer
-ENV DISPLAY=:99
-ENV CHROME_BIN=/usr/bin/google-chrome-stable
+# Set environment variable for Puppeteer
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH="$(node -e 'console.log(require("puppeteer").executablePath())')"
+
+# Expose port 3000 (or whatever your app uses)
+EXPOSE 8080
 
 # Command to run the application
-CMD ["node", "dist/index.js"]
+CMD ["node", "dist/app.js"]
