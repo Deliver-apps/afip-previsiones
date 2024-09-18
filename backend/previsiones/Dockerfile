@@ -4,7 +4,13 @@ FROM ghcr.io/puppeteer/puppeteer:23.0.2
 # Set environment variables to skip Chromium download
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
-
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont
 # Set the working directory
 WORKDIR /usr/src/app
 

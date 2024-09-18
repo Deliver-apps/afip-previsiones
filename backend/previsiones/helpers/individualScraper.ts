@@ -47,7 +47,7 @@ export const individualScraper = async ({
       logger.info("Using production browser..." + puppeteer.executablePath());
       browser = await puppeteer.launch({
         headless: true,
-        executablePath: "/usr/bin/google-chrome-stable",
+        executablePath: "/usr/bin/chromium-browser",
         args: [
           "--no-sandbox",
           "--disable-setuid-sandbox",
