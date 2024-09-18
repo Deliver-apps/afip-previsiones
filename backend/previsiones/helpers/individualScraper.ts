@@ -43,7 +43,6 @@ export const individualScraper = async ({
   let newPage2: Page | null = null;
   try {
     logger.info("Launching browser...");
-    logger.info(config.nodeEnv);
     if (config.nodeEnv === "production") {
       logger.info("Production");
       browser = await puppeteer.launch({
