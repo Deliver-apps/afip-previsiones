@@ -5,9 +5,13 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
 
 WORKDIR /usr/src/app
 
-EXPOSE 3000
-
 COPY package*.json ./
-RUN npm i
+RUN npm install
+
 COPY . .
-CMD [ "node", "app.js" ]
+
+RUN npm run build
+
+EXPOSE 3001
+
+CMD ["node", "dist/index.js"]
