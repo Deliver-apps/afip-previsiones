@@ -1,6 +1,6 @@
-const { supabase } = require("../supabaseClient.js");
+import { supabase } from "../supabaseClient";
 
-async function verifyAccessToken(token) {
+export async function verifyAccessToken(token: string) {
   try {
     const cleanToken = token.replace(/=+$/, "");
     const { data, error } = await supabase.auth.getUser(cleanToken);
@@ -14,7 +14,3 @@ async function verifyAccessToken(token) {
     return { success: false, error: "No se pudo verificar el token" };
   }
 }
-
-module.exports = {
-  verifyAccessToken,
-};
