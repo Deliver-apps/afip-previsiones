@@ -30,7 +30,7 @@ RUN npm run build
 
 # Copy Nginx configuration template
 WORKDIR /app
-COPY backend/nginx/nginx.conf /etc/nginx/nginx.conf
+COPY backend/nginx/nginx.conf.template /etc/nginx/nginx.conf.template
 
 # Expose the necessary port
 EXPOSE ${PORT}
@@ -38,8 +38,8 @@ EXPOSE ${PORT}
 # Copy the PM2 ecosystem file
 COPY ecosystem.config.js .
 
-# Start all services using PM2 with environment variable substitution
+# Start Nginx and services using PM2
 CMD ["/bin/sh", "-c", "\
     envsubst '\$PORT' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && \
-    pm2-runtime ecosystem.config.js \
-    "]
+    pm2-runtime ecosystem.config.js && \
+    nginx -g 'daemon off;'"]
