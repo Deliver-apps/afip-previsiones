@@ -30,7 +30,7 @@ RUN npm run build
 
 # Copy Nginx configuration template
 WORKDIR /app
-COPY backend/nginx/nginx.conf.template /etc/nginx/nginx.conf.template
+COPY backend/nginx/nginx.conf /etc/nginx/nginx.conf
 
 # Expose the necessary port
 EXPOSE ${PORT}
