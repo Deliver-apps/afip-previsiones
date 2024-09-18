@@ -8,6 +8,10 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
 # Set the working directory
 WORKDIR /usr/src/app
 
+# Install build essentials
+RUN apt-get update && apt-get install -y build-essential && \
+    rm -rf /var/lib/apt/lists/*
+
 # Copy package.json and package-lock.json (if available)
 COPY package*.json ./
 
@@ -17,15 +21,16 @@ RUN npm install
 # Copy the rest of the application code
 COPY . .
 
-# Compile TypeScript code to JavaScript
-RUN npm run build
+# Compile TypeScript code to JavaScript with verbose logging
+RUN npm run build --verbose
 
 # Stage 2: Run the compiled JavaScript code
 FROM ghcr.io/puppeteer/puppeteer:23.0.2
 
 # Set environment variables for Puppeteer
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable \
+    NODE_ENV=production
 
 # Set the working directory
 WORKDIR /usr/src/app
