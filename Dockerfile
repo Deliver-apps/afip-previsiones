@@ -1,22 +1,22 @@
-# Use Puppeteer image as the base (it is Alpine-based)
+# Base image: Use Puppeteer with Node.js
 FROM ghcr.io/puppeteer/puppeteer:23.0.2
 
 # Set environment variables to skip Chromium download
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
 
-# Install dependencies for Nginx and build tools using apk (Alpine package manager)
-RUN apk update && apk add --no-cache \
+# Install dependencies for Nginx and build tools
+RUN apt-get update && apt-get install -y \
     nginx \
     gettext \
     python3 \
     make \
     g++ \
-    ca-certificates \
-    ttf-freefont \
-    nss \
-    freetype \
-    harfbuzz
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install PM2 globally
+RUN npm install pm2 -g
 
 # Set the working directory
 WORKDIR /app
@@ -26,13 +26,11 @@ COPY backend/ ./backend/
 
 # Install dependencies and build 'previsiones'
 WORKDIR /app/backend/previsiones
-RUN npm install
-RUN npm run build
+RUN npm install && npm run build
 
 # Install dependencies and build 'facturador'
 WORKDIR /app/backend/facturador
-RUN npm install
-RUN npm run build
+RUN npm install && npm run build
 
 # Copy Nginx configuration template
 WORKDIR /app
@@ -45,4 +43,4 @@ EXPOSE ${PORT}
 COPY ecosystem.config.js .
 
 # Start Nginx and services using PM2
-CMD sh -c "envsubst '\$PORT' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && pm2-runtime ecosystem.config.js && nginx -g 'daemon off;'"
+CMD sh -c "envsubst '\$PORT' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && pm2-runtime ecosystem.config.js"
