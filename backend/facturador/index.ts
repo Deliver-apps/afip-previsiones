@@ -27,7 +27,9 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 // API route for scraping
 // app.use("/api/scrape", authenticateToken, router);
-
+app.get("/", (req: Request, res: Response) => {
+  res.send("Hello World!");
+});
 // Start the Express server
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);

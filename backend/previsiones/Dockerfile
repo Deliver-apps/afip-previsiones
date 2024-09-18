@@ -1,42 +1,54 @@
-# Stage 1: Build the TypeScript code
-FROM ghcr.io/puppeteer/puppeteer:23.0.2 AS build
+# Stage 1: Build the TypeScript code for 'previsiones'
+FROM ghcr.io/puppeteer/puppeteer:23.0.2 AS build-previsiones
 
 # Set environment variables for Puppeteer
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
 
 # Set the working directory
-WORKDIR /usr/src/app
+WORKDIR /usr/src/app/previsiones
 
-# Copy package.json and package-lock.json (if available)
-COPY package*.json ./
+# Copy package.json and package-lock.json for 'previsiones'
+COPY ./previsiones/package*.json ./
 
-# Install dependencies, including devDependencies
+# Install dependencies
 RUN npm install
 
 # Copy the rest of the application code
-COPY . .
+COPY ./previsiones ./
 
-# Compile TypeScript code to JavaScript
+# Compile TypeScript to JavaScript
 RUN npm run build
 
-# Stage 2: Run the compiled JavaScript code
-FROM ghcr.io/puppeteer/puppeteer:23.0.2
+# Stage 2: Build the TypeScript code for 'facturador'
+FROM ghcr.io/puppeteer/puppeteer:23.0.2 AS build-facturador
 
-# Set environment variables for Puppeteer
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
+WORKDIR /usr/src/app/facturador
 
-# Set the working directory
-WORKDIR /usr/src/app
+# Copy package.json and package-lock.json for 'facturador'
+COPY ./facturador/package*.json ./
 
-# Copy only the necessary files from the build stage
-COPY --from=build /usr/src/app/package*.json ./
-COPY --from=build /usr/src/app/node_modules ./node_modules
-COPY --from=build /usr/src/app/dist ./dist
+# Install dependencies
+RUN npm install
 
-# Expose the application port
-EXPOSE 3000
+# Copy the rest of the application code
+COPY ./facturador ./
 
-# Start the application using the compiled JavaScript
-CMD [ "node", "dist/index.js" ]
+# Compile TypeScript to JavaScript
+RUN npm run build
+
+# Stage 3: Set up Nginx with both services
+FROM nginx:alpine
+
+# Copy Nginx configuration file
+COPY ./nginx/nginx.conf /etc/nginx/nginx.conf
+
+# Copy the built 'previsiones' and 'facturador' services
+COPY --from=build-previsiones /usr/src/app/previsiones/dist /usr/share/nginx/html/previsiones
+COPY --from=build-facturador /usr/src/app/facturador/dist /usr/share/nginx/html/facturador
+
+# Expose the port Nginx will listen on
+EXPOSE 80
+
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"]
