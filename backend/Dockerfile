@@ -1,5 +1,5 @@
 # Use an official node slim image
-FROM node:16-slim
+FROM node:20
 
 # Install necessary packages and dependencies for puppeteer
 RUN apt-get update && apt-get install -y \
