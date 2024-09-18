@@ -1,17 +1,70 @@
-FROM ghcr.io/puppeteer/puppeteer:23.0.2
+# Stage 1: Build 'previsiones' service
+FROM ghcr.io/puppeteer/puppeteer:23.0.2 AS build-previsiones
 
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
 
-WORKDIR /usr/src/app
+WORKDIR /app/previsiones
 
+# Copy 'previsiones' package files
 COPY backend/previsiones/package*.json ./
+
+# Install dependencies
 RUN npm install
 
-COPY backend/previsiones ./
+# Copy 'previsiones' source code
+COPY backend/previsiones/ ./
 
+# Build the TypeScript code
 RUN npm run build
 
-EXPOSE 3001
+# Stage 2: Build 'facturador' service
+FROM node:16-alpine AS build-facturador
 
-CMD ["node", "dist/index.js"]
+WORKDIR /app/facturador
+
+# Copy 'facturador' package files
+COPY backend/facturador/package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy 'facturador' source code
+COPY backend/facturador/ ./
+
+# Build the TypeScript code
+RUN npm run build
+
+# Stage 3: Create the final image with both services and Nginx
+FROM node:16-alpine
+
+# Install Nginx and necessary build tools
+RUN apk update && apk add --no-cache \
+    nginx \
+    python3 \
+    make \
+    g++
+
+# Install PM2 globally
+RUN npm install pm2 -g
+
+# Set the working directory
+WORKDIR /app
+
+# Copy built 'previsiones' service
+COPY --from=build-previsiones /app/previsiones /app/previsiones
+
+# Copy built 'facturador' service
+COPY --from=build-facturador /app/facturador /app/facturador
+
+# Copy Nginx configuration
+COPY backend/nginx/nginx.conf /etc/nginx/nginx.conf
+
+# Expose the necessary port
+EXPOSE 80
+
+# Copy the PM2 ecosystem file
+COPY ecosystem.config.js .
+
+# Start all services using PM2
+CMD ["pm2-runtime", "ecosystem.config.js"]
