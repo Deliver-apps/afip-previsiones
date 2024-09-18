@@ -1,5 +1,5 @@
 # Base image
-FROM node:16-alpine
+FROM node:20-alpine
 
 # Install dependencies for Nginx
 RUN apk update && apk add nginx
