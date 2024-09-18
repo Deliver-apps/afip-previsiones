@@ -1,4 +1,10 @@
-import { createLogger, transports, format, addColors, config } from "winston";
+const {
+  createLogger,
+  transports,
+  format,
+  addColors,
+  config,
+} = require("winston");
 
 addColors({
   error: "red",
@@ -11,7 +17,7 @@ addColors({
 const customLevels = {
   levels: config.npm.levels,
 };
-export const logger = createLogger({
+const logger = createLogger({
   transports: [
     new transports.Console({
       level: "debug",
@@ -20,10 +26,12 @@ export const logger = createLogger({
         format.json(),
         format.colorize({ all: true }),
         format.printf(
-          (info) => `${info.timestamp} [${info.level}]: ${info.message}`,
-        ),
+          (info) => `${info.timestamp} [${info.level}]: ${info.message}`
+        )
       ),
     }),
   ],
   levels: customLevels.levels,
 });
+
+module.exports = logger;

@@ -1,34 +1,28 @@
-import { PutObjectCommand, ObjectCannedACL } from "@aws-sdk/client-s3";
-import puppeteer from "puppeteer";
-import { logger } from "../config/logger";
-import { s3ClientPrevisiones } from "../digitalOceanClient";
-import { Browser, Page } from "puppeteer";
-import { ScraperPrevisiones } from "../types/scraperPrevisiones.types";
-import { config } from "../config/config";
+const puppeteer = require("puppeteer");
+const logger = require("../config/logger");
+const config = require("../config/config");
+const { s3ClientPrevisiones } = require("../digitalOceanClient");
+const { PutObjectCommand } = require("@aws-sdk/client-s3");
 
-const formatCUIT = (cuit: string) => {
+const formatCUIT = (cuit) => {
   if (cuit.length !== 11) {
     throw new Error("CUIT must be 11 digits long");
   }
   return `${cuit.slice(0, 2)}-${cuit.slice(2, 10)}-${cuit.slice(10)}`;
 };
 
-const uploadToSpaces = async (
-  buffer: Uint8Array | Buffer,
-  fileName: string,
-) => {
-  const acl = ObjectCannedACL.public_read;
+const uploadToSpaces = async (buffer, fileName) => {
   const params = {
     Bucket: "previsiones-afip",
     Key: fileName,
     Body: buffer,
-    ACL: acl,
+    ACL: "public-read",
   };
 
   return await s3ClientPrevisiones.send(new PutObjectCommand(params));
 };
 
-export const individualScraper = async ({
+const individualScraper = async ({
   username,
   password,
   is_company: isCompany,
@@ -36,42 +30,13 @@ export const individualScraper = async ({
   cuit_company: cuitCompany,
   real_name: realName,
   retry,
-}: ScraperPrevisiones) => {
-  let browser: Browser;
-  let firstPage: Page;
-  let newPage: Page | null = null;
-  let newPage2: Page | null = null;
+}) => {
+  let browser;
+  let page;
+  let newPage;
+  let newPage2;
   try {
-    logger.info("Launching browser...");
-    if (config.nodeEnv === "production") {
-      browser = await puppeteer.launch({
-        headless: true,
-        executablePath: config.chromeExecutablePath,
-        args: [
-          "--no-sandbox",
-          "--disable-setuid-sandbox",
-          "--disable-dev-shm-usage",
-          "--disable-accelerated-2d-canvas",
-          "--no-first-run",
-          "--no-zygote",
-          "--disable-gpu",
-        ],
-      });
-    } else {
-      browser = await puppeteer.launch({
-        headless: false,
-        args: ["--no-sandbox", "--disable-setuid-sandbox"],
-        // executablePath: config.nodeEnv
-        //   ? config.chromeExecutablePath
-        //   : puppeteer.executablePath(),
-        // args: [
-        //   "--no-sandbox",
-        //   "--disable-setuid-sandbox",
-        //   "--single-process",
-        //   "--no-zygote",
-        // ],
-      });
-    }
+    console.log("Launching browser...");
     browser = await puppeteer.launch({
       headless: false,
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
@@ -85,11 +50,11 @@ export const individualScraper = async ({
       //   "--no-zygote",
       // ],
     });
-  } catch (error: any) {
+  } catch (error) {
     throw new Error("Failed to launch browser: " + error.message);
   }
 
-  firstPage = await browser.newPage();
+  page = await browser.newPage();
   const url = "https://www.afip.gob.ar/landing/default.asp";
 
   const closeBrowser = async () => {
@@ -98,7 +63,7 @@ export const individualScraper = async ({
     }
   };
 
-  const handleRetry = async (error: Error, paget: Page) => {
+  const handleRetry = async (error, paget) => {
     console.error("An error occurred:", error.message);
     if (!retry) {
       await closeBrowser();
@@ -124,11 +89,9 @@ export const individualScraper = async ({
 
   try {
     // Navigate to the initial URL
-    await firstPage.goto(url);
-    await firstPage.waitForSelector(
-      "a.btn.btn-sm.btn-info.btn-block.uppercase",
-    );
-    await firstPage.click("a.btn.btn-sm.btn-info.btn-block.uppercase");
+    await page.goto(url);
+    await page.waitForSelector("a.btn.btn-sm.btn-info.btn-block.uppercase");
+    await page.click("a.btn.btn-sm.btn-info.btn-block.uppercase");
 
     // Handle the new page that opens after clicking
     newPage = await getNewPage(browser);
@@ -172,22 +135,22 @@ export const individualScraper = async ({
     // Close the browser and return the extracted data
     await closeBrowser();
     return campos;
-  } catch (error: any) {
+  } catch (error) {
     logger.error("An error occurred:", error.message);
-    const seletedPage = newPage2 ?? newPage ?? firstPage;
+    const seletedPage = newPage2 || newPage || page;
     const screenshotBuffer = await seletedPage.screenshot({
       encoding: "binary",
     });
     const fileName = `screenshots/screenshot-${Date.now()}.png`;
     await uploadToSpaces(screenshotBuffer, fileName);
 
-    await handleRetry(error, newPage2 ?? newPage ?? firstPage);
+    await handleRetry(error, newPage2 || newPage || page);
 
     return { error: error.message };
   }
 };
 
-const goToData = async (page: Page) => {
+const goToData = async (page) => {
   logger.info("Going to data...");
   await page.waitForFunction(() => document.readyState === "complete");
   await page.evaluate(() => {
@@ -201,7 +164,7 @@ const goToData = async (page: Page) => {
   await new Promise((resolve) => setTimeout(resolve, 1000));
 };
 
-const buyBook = async (page: Page) => {
+const buyBook = async (page) => {
   logger.info("Opening buy book...");
   await page.waitForFunction(() => document.readyState === "complete");
   await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -231,7 +194,7 @@ const buyBook = async (page: Page) => {
 
   await page.evaluate(() => {
     const link = Array.from(document.querySelectorAll("a")).find((element) =>
-      element.textContent?.includes("Volver al Libro"),
+      element.textContent.includes("Volver al Libro"),
     );
     if (link) {
       link.click();
@@ -243,7 +206,7 @@ const buyBook = async (page: Page) => {
   await page.waitForFunction(() => document.readyState === "complete");
 };
 
-const sellBook = async (page: Page) => {
+const sellBook = async (page) => {
   logger.info("Opening sell book...");
   await page.waitForFunction(() => document.readyState === "complete");
   await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -273,7 +236,7 @@ const sellBook = async (page: Page) => {
   await new Promise((resolve) => setTimeout(resolve, 1000));
   await page.evaluate(() => {
     const link = Array.from(document.querySelectorAll("a")).find((element) =>
-      element.textContent?.includes("Continuar al Libro Compras"),
+      element.textContent.includes("Continuar al Libro Compras"),
     );
     if (link) {
       link.click();
@@ -286,12 +249,12 @@ const sellBook = async (page: Page) => {
   await new Promise((resolve) => setTimeout(resolve, 1000));
 };
 
-const openBooks = async (page: Page) => {
+const openBooks = async (page) => {
   logger.info("Opening books...");
   await page.waitForFunction(() => document.readyState === "complete");
   logger.error("Waiting for button...");
   await page.evaluate(async () => {
-    const button: HTMLButtonElement | null = document.querySelector(
+    const button = document.querySelector(
       'button[aria-label="Sin texto (iva.home.btn.nueva.declaracion.alt)"]',
     );
     if (button) {
@@ -304,7 +267,7 @@ const openBooks = async (page: Page) => {
   logger.error("Waiting for body...");
   await page.waitForSelector("body");
   await page.evaluate(() => {
-    const button: HTMLButtonElement | null = document.querySelector(
+    const button = document.querySelector(
       'button[aria-label="Sin texto (iva.btn.home.liva.alt)"]',
     );
     if (button) {
@@ -335,13 +298,13 @@ const openBooks = async (page: Page) => {
   await new Promise((resolve) => setTimeout(resolve, 4000));
 };
 
-const newDeclaration = async (page: Page) => {
+const newDeclaration = async (page) => {
   await page.waitForFunction(() => document.readyState === "complete");
   await new Promise((resolve) => setTimeout(resolve, 3000));
   try {
     logger.info("Opening new declaration...");
     await page.evaluate(() => {
-      const button: HTMLButtonElement | null = document.querySelector(
+      const button = document.querySelector(
         'button[aria-label="Sin texto (iva.home.btn.nueva.declaracion.alt)"]',
       );
       if (button) {
@@ -350,7 +313,7 @@ const newDeclaration = async (page: Page) => {
         console.error("ERROR INGRESAR");
       }
     });
-  } catch (error: any) {
+  } catch (error) {
     const screenshotBuffer = await page.screenshot({ encoding: "binary" });
     const fileName = `screenshots/screenshot-${Date.now()}.png`;
     await uploadToSpaces(screenshotBuffer, fileName);
@@ -358,10 +321,10 @@ const newDeclaration = async (page: Page) => {
   }
 };
 
-const getNewPage = async (browser: Browser): Promise<Page> => {
+const getNewPage = async (browser) => {
   try {
     logger.info("Opening new page...");
-    const newPagePromise: Promise<Page> = new Promise((resolve, reject) => {
+    const newPagePromise = new Promise((resolve, reject) => {
       const timeout = setTimeout(
         () => reject(new Error("Timeout waiting for new page")),
         10_000, // Increased timeout for new page creation
@@ -369,16 +332,13 @@ const getNewPage = async (browser: Browser): Promise<Page> => {
 
       browser.once("targetcreated", async (target) => {
         clearTimeout(timeout);
-        const page: Page | null = await target.page();
-        if (!page) {
-          throw new Error("Target did not produce a page");
-        }
+        const page = await target.page();
         resolve(page);
       });
     });
 
     logger.debug("Waiting for new page...");
-    const newPageC: Page = await newPagePromise;
+    const newPageC = await newPagePromise;
     logger.debug("New page created...");
 
     // if you know the page needs additional time to load fully, use a fixed delay
@@ -387,13 +347,13 @@ const getNewPage = async (browser: Browser): Promise<Page> => {
     logger.info("New page opened...");
 
     return newPageC;
-  } catch (error: any) {
+  } catch (error) {
     logger.error("Error in getNewPage:", error); // Log the full error details
     throw new Error("Failed to open new page: " + error.message);
   }
 };
 
-const loginToAfip = async (page: Page, username: string, password: string) => {
+const loginToAfip = async (page, username, password) => {
   try {
     logger.info(`Logging in to AFIP...${username}`);
     await page.waitForFunction(() => document.readyState === "complete");
@@ -409,7 +369,7 @@ const loginToAfip = async (page: Page, username: string, password: string) => {
     await page.type("#F1\\:password", password);
     logger.info("Clicking login button...");
     await page.click("#F1\\:btnIngresar");
-  } catch (error: any) {
+  } catch (error) {
     const screenshotBuffer = await page.screenshot({ encoding: "binary" });
     const fileName = `screenshots/screenshot-${Date.now()}.png`;
     await uploadToSpaces(screenshotBuffer, fileName);
@@ -418,7 +378,7 @@ const loginToAfip = async (page: Page, username: string, password: string) => {
   }
 };
 
-const navigateToPortalIVA = async (page: Page) => {
+const navigateToPortalIVA = async (page) => {
   try {
     logger.info("Navigating to Portal IVA...");
     await page.waitForFunction(() => document.readyState === "complete");
@@ -428,7 +388,7 @@ const navigateToPortalIVA = async (page: Page) => {
     });
     await page.type("#buscadorInput", "Portal iva");
     await page.click("#rbt-menu-item-0");
-  } catch (error: any) {
+  } catch (error) {
     const screenshotBuffer = await page.screenshot({ encoding: "binary" });
     const fileName = `screenshots/screenshot-${Date.now()}.png`;
     await uploadToSpaces(screenshotBuffer, fileName);
@@ -436,13 +396,13 @@ const navigateToPortalIVA = async (page: Page) => {
   }
 };
 
-const switchCompanyContext = async (page: Page, cuitCompany: string) => {
+const switchCompanyContext = async (page, cuitCompany) => {
   try {
     await page.waitForFunction(() => document.readyState === "complete");
     await new Promise((resolve) => setTimeout(resolve, 1000));
     logger.info(`Switching company context to ${cuitCompany}...`);
     await page.waitForSelector('a[title="cambio relación"]', {
-      timeout: 10_000,
+      timeout: 6_000,
     });
     await page.click('a[title="cambio relación"]');
     await page.waitForFunction(() => document.readyState === "complete");
@@ -450,11 +410,11 @@ const switchCompanyContext = async (page: Page, cuitCompany: string) => {
 
     const cuitCompanyText = formatCUIT(cuitCompany);
     const targetElementFound = await page.evaluate((cuitCompanyText) => {
-      const elements: HTMLElement[] | null = Array.from(
+      const elements = Array.from(
         document.querySelectorAll("div.media-body h3"),
       );
       const targetElement = elements.find((el) =>
-        el.textContent?.includes(cuitCompanyText),
+        el.textContent.includes(cuitCompanyText),
       );
       if (targetElement) {
         targetElement.click();
@@ -476,18 +436,18 @@ const switchCompanyContext = async (page: Page, cuitCompany: string) => {
           document.querySelectorAll("div.media-body h3"),
         );
         const targetElement = elements.find((el) =>
-          el.textContent?.includes(cuitCompanyText),
+          el.textContent.includes(cuitCompanyText),
         );
-        if (targetElement !== undefined) {
-          (targetElement as HTMLElement).click();
+        if (targetElement) {
+          targetElement.click();
         } else {
           console.error(`Element containing CUIT ${cuitCompanyText} not found`);
         }
       }, cuitCompanyText);
-    } catch (error: any) {
+    } catch (error) {
       await page.goBack();
     }
-  } catch (error: any) {
+  } catch (error) {
     const screenshotBuffer = await page.screenshot({ encoding: "binary" });
     const fileName = `screenshots/screenshot-${Date.now()}.png`;
     await uploadToSpaces(screenshotBuffer, fileName);
@@ -495,21 +455,15 @@ const switchCompanyContext = async (page: Page, cuitCompany: string) => {
   }
 };
 
-const checkAndValidatePeriod = async (page: Page) => {
+const checkAndValidatePeriod = async (page) => {
   try {
     await page.waitForFunction(() => document.readyState === "complete");
     logger.info("Checking and validating period...");
     await page.waitForSelector("#periodo", {
-      timeout: 10_000,
+      timeout: 6_000,
     });
-    console.log("Waiting for periodo...");
     const optionsCount = await page.evaluate(() => {
-      const selectElement = document.querySelector(
-        "#periodo",
-      ) as HTMLSelectElement;
-      if (!selectElement) {
-        throw new Error("Select element not found");
-      }
+      const selectElement = document.querySelector("#periodo");
       return selectElement.options.length;
     });
 
@@ -529,7 +483,7 @@ const checkAndValidatePeriod = async (page: Page) => {
     await page.click(
       'button[aria-label="Sin texto (iva.btn.home.validar.periodo.alt)"]',
     );
-  } catch (error: any) {
+  } catch (error) {
     const screenshotBuffer = await page.screenshot({ encoding: "binary" });
     const fileName = `screenshots/screenshot-${Date.now()}.png`;
     await uploadToSpaces(screenshotBuffer, fileName);
@@ -538,12 +492,12 @@ const checkAndValidatePeriod = async (page: Page) => {
 };
 
 const extractData = async (
-  page: Page,
-  cuitCompany: string,
-  username: string,
-  isCompany: boolean,
-  companyName: string,
-  realName: string,
+  page,
+  cuitCompany,
+  username,
+  isCompany,
+  companyName,
+  realName,
 ) => {
   try {
     logger.info(`Extracting data...${realName}`);
@@ -555,10 +509,10 @@ const extractData = async (
     });
 
     const extractedData = await page.evaluate(() => {
-      const extractValues = (prefix: string) => {
-        const getTextContent = (id: string) => {
+      const extractValues = (prefix) => {
+        const getTextContent = (id) => {
           const element = document.querySelector(`#${id}`);
-          return element ? element.textContent?.trim() : null;
+          return element ? element.textContent.trim() : null;
         };
 
         return {
@@ -588,7 +542,7 @@ const extractData = async (
       isCompany,
       nameToShow: companyName || realName,
     };
-  } catch (error: any) {
+  } catch (error) {
     const screenshotBuffer = await page.screenshot({ encoding: "binary" });
     const fileName = `screenshots/screenshot-${Date.now()}.png`;
     await uploadToSpaces(screenshotBuffer, fileName);
@@ -596,17 +550,19 @@ const extractData = async (
   }
 };
 
-const retryWithDelay = async (page: Page, selector: string, delay: number) => {
+const retryWithDelay = async (page, selector, delay) => {
   try {
     await new Promise((resolve) => setTimeout(resolve, delay));
     await page.waitForFunction(() => document.readyState === "complete");
     await page.waitForSelector(selector, {
       timeout: 6_000,
     });
-  } catch (error: any) {
+  } catch (error) {
     const screenshotBuffer = await page.screenshot({ encoding: "binary" });
     const fileName = `screenshots/screenshot-${Date.now()}.png`;
     await uploadToSpaces(screenshotBuffer, fileName);
     throw new Error("Retry failed: " + error.message);
   }
 };
+
+exports.individualScraper = individualScraper;

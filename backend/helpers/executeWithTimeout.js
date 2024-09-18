@@ -1,13 +1,8 @@
-const executeWithTimeout = async (
-  fn: () => Promise<any>,
-  timeout = 12_0000,
-) => {
+const executeWithTimeout = async (fn, timeout = 12_0000) => {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
       reject(
-        new Error(
-          "La función no completó su ejecución en el tiempo permitido.",
-        ),
+        new Error("La función no completó su ejecución en el tiempo permitido.")
       );
     }, timeout);
 
