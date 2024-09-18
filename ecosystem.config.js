@@ -3,16 +3,20 @@ module.exports = {
     {
       name: "previsiones",
       script: "backend/previsiones/dist/index.js",
+      cwd: "/app",
       env: {
-        PORT: 3001,
+        PORT: process.env.PREVISIONES_PORT || 3001,
         NODE_ENV: "production",
+        PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true",
+        PUPPETEER_EXECUTABLE_PATH: "/usr/bin/google-chrome-stable",
       },
     },
     {
       name: "facturador",
       script: "backend/facturador/dist/index.js",
+      cwd: "/app",
       env: {
-        PORT: 3002,
+        PORT: process.env.FACTURADOR_PORT || 3002,
         NODE_ENV: "production",
       },
     },
@@ -21,6 +25,9 @@ module.exports = {
       script: "nginx",
       args: ["-g", "daemon off;"],
       exec_mode: "fork",
+      env: {
+        PORT: process.env.PORT || 8080,
+      },
     },
   ],
 };
