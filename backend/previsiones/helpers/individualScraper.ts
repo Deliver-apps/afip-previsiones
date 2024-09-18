@@ -44,7 +44,6 @@ export const individualScraper = async ({
   try {
     logger.info("Launching browser...");
     if (config.nodeEnv === "production") {
-      logger.info("Production");
       browser = await puppeteer.launch({
         headless: false,
         executablePath: puppeteer.executablePath(),
@@ -56,7 +55,6 @@ export const individualScraper = async ({
         ],
       });
     } else {
-      logger.info("Dev");
       browser = await puppeteer.launch({
         headless: false,
         args: ["--no-sandbox", "--disable-setuid-sandbox"],
