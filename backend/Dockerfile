@@ -14,11 +14,13 @@ EXPOSE 3000
 # Copy package.json and package-lock.json files
 COPY package*.json ./
 
-# Install npm dependencies
+# Install npm dependencies with unsafe-perm
 RUN npm install --unsafe-perm
 
-# Install TypeScript globally with sudo
-RUN sudo npm install -g typescript --unsafe-perm
+# Switch to root user, install TypeScript, and switch back to pptruser
+USER root
+RUN npm install -g typescript --unsafe-perm
+USER pptruser
 
 # Copy the rest of the application code
 COPY . .
