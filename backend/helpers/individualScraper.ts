@@ -45,7 +45,7 @@ export const individualScraper = async ({
     logger.info("Launching browser...");
     if (config.nodeEnv === "production") {
       browser = await puppeteer.launch({
-        headless: false,
+        headless: true,
         executablePath: config.chromeExecutablePath,
         args: [
           "--no-sandbox",
