@@ -1,4 +1,4 @@
-# Use a Puppeteer image base
+# Use a Puppeteer base image
 FROM ghcr.io/puppeteer/puppeteer:23.0.2
 
 # Set environment variables
@@ -10,6 +10,33 @@ WORKDIR /usr/src/app
 
 # Expose the application port
 EXPOSE 3000
+
+# Install dependencies required for running Chrome in headless mode
+RUN apt-get update && \
+    apt-get install -y \
+    libnss3 \
+    libxss1 \
+    libasound2 \
+    libx11-xcb1 \
+    libxcomposite1 \
+    libxcursor1 \
+    libxdamage1 \
+    libxrandr2 \
+    libgbm1 \
+    libgtk-3-0 \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libatk1.0-0 \
+    xfonts-base \
+    xfonts-75dpi \
+    fonts-liberation \
+    libappindicator3-1 \
+    libxshmfence1 \
+    libxslt1.1 \
+    dbus-x11 \
+    --no-install-recommends && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # Copy package.json and package-lock.json files
 COPY package*.json ./
@@ -28,5 +55,8 @@ COPY . .
 # Compile TypeScript to JavaScript
 RUN tsc
 
+# Set up environment for headless Chrome
+ENV DISPLAY=:99
+
 # Command to run the application
-CMD ["node", "dist/index.js"]
+CMD ["node", "dist/app.js"]
