@@ -1,23 +1,42 @@
-# Use an official Node.js runtime as a parent image
-FROM node:20-alpine
+# Stage 1: Build the TypeScript code
+FROM ghcr.io/puppeteer/puppeteer:23.0.2 AS build
 
-# Set the working directory inside the container
+# Set environment variables for Puppeteer
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
+
+# Set the working directory
 WORKDIR /usr/src/app
 
-# Copy package.json and package-lock.json (if available) to the container
+# Copy package.json and package-lock.json (if available)
 COPY package*.json ./
 
-# Install dependencies
+# Install dependencies, including devDependencies
 RUN npm install
 
-# Copy the rest of the application code to the container
+# Copy the rest of the application code
 COPY . .
 
-# Build the TypeScript code
+# Compile TypeScript code to JavaScript
 RUN npm run build
 
-# Expose the port the app runs on
-EXPOSE 3002
+# Stage 2: Run the compiled JavaScript code
+FROM ghcr.io/puppeteer/puppeteer:23.0.2
 
-# Define the command to run the app
-CMD ["node", "dist/index.js"]
+# Set environment variables for Puppeteer
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
+
+# Set the working directory
+WORKDIR /usr/src/app
+
+# Copy only the necessary files from the build stage
+COPY --from=build /usr/src/app/package*.json ./
+COPY --from=build /usr/src/app/node_modules ./node_modules
+COPY --from=build /usr/src/app/dist ./dist
+
+# Expose the application port
+EXPOSE 3001
+
+# Start the application using the compiled JavaScript
+CMD [ "node", "dist/index.js" ]
