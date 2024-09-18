@@ -9,20 +9,26 @@ RUN apk update && apk add --no-cache \
     make \
     g++
 
-# Install PM2 globally
-RUN npm install pm2 -g
+# Install PM2 globally and TypeScript
+RUN npm install -g pm2 typescript
 
 # Set the working directory
 WORKDIR /app
 
 # Copy the backend code
 COPY backend/ ./backend/
-# Stage 1: Copy the Puppeteer build from previsiones Dockerfile
+
+# Copy the Puppeteer build from previsiones Dockerfile
 COPY backend/previsiones/Dockerfile ./previsiones/Dockerfile
 COPY backend/previsiones/ ./previsiones
 
 # Install dependencies and build 'facturador'
 WORKDIR /app/backend/facturador
+RUN npm install
+RUN npm run build
+
+# Install dependencies and build 'previsiones'
+WORKDIR /app/backend/previsiones
 RUN npm install
 RUN npm run build
 
