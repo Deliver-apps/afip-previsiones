@@ -1,28 +1,27 @@
 # Base image
 FROM node:20-alpine
 
-# Install dependencies for Nginx, build tools, and Puppeteer
+# Install dependencies for Nginx, build tools, Puppeteer, and other utilities
 RUN apk update && apk add --no-cache \
     nginx \
     gettext \
     python3 \
     make \
     g++ \
-    # Puppeteer dependencies
     chromium \
     nss \
     freetype \
     harfbuzz \
     ca-certificates \
     ttf-freefont \
-    # Utilities
     bash \
-    curl
+    curl \
+    # Add any other necessary packages here
 
-# Install PM2 globally and TypeScript
-RUN npm install -g pm2 typescript
+    # Install PM2 globally and TypeScript
+    RUN npm install -g pm2 typescript
 
-# Set environment variables for Puppeteer
+# Set environment variables for Puppeteer and Node.js
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
     NODE_ENV=production
@@ -30,18 +29,18 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
 # Set the working directory
 WORKDIR /app
 
-# Copy the backend code
+# Copy the entire backend code
 COPY backend/ ./backend/
 
 # Install dependencies and build 'facturador'
 WORKDIR /app/backend/facturador
 RUN npm install
-RUN npm run build
+RUN npm run build --verbose
 
 # Install dependencies and build 'previsiones'
 WORKDIR /app/backend/previsiones
 RUN npm install
-RUN npm run build
+RUN npm run build --verbose
 
 # Copy Nginx configuration template
 WORKDIR /app
