@@ -1,33 +1,24 @@
 # Base image
 FROM node:20-alpine
 
-# Install Chromium and dependencies
+# Install dependencies for Nginx and build tools
 RUN apk update && apk add --no-cache \
-    chromium \
-    nss \
-    freetype \
-    harfbuzz \
-    ca-certificates \
-    ttf-freefont \
+    nginx \
+    gettext \
     python3 \
     make \
-    g++ \
-    nginx \
-    gettext
+    g++
 
 # Install PM2 globally and TypeScript
 RUN npm install -g pm2 typescript
 
-# Set environment variable to skip Chromium download in Puppeteer
-ENV PUPPETEER_SKIP_DOWNLOAD true
-
-# Set working directory
+# Set the working directory
 WORKDIR /app
 
-# Copy backend code
+# Copy the backend code
 COPY backend/ ./backend/
 
-# Copy Puppeteer build from previsiones Dockerfile
+# Copy the Puppeteer build from previsiones Dockerfile
 COPY backend/previsiones/Dockerfile ./previsiones/Dockerfile
 COPY backend/previsiones/ ./previsiones
 
@@ -50,12 +41,6 @@ EXPOSE ${PORT}
 
 # Copy the PM2 ecosystem file
 COPY ecosystem.config.js .
-
-# Create a user for Puppeteer and switch to it
-RUN addgroup -S pptruser && adduser -S -G pptruser pptruser \
-    && mkdir -p /home/pptruser/Downloads \
-    && chown -R pptruser:pptruser /home/pptruser
-USER pptruser
 
 # Start Nginx and services using PM2
 CMD sh -c "envsubst '\$PORT' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && pm2-runtime ecosystem.config.js && nginx -g 'daemon off;'"
