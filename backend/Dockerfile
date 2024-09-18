@@ -68,4 +68,4 @@ RUN tsc
 ENV DISPLAY=:99
 
 # Command to run the application
-CMD ["node", "dist/app.js"]
+CMD ["node", "dist/index.js"]
