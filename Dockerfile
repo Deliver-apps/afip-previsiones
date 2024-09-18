@@ -38,8 +38,5 @@ EXPOSE ${PORT}
 # Copy the PM2 ecosystem file
 COPY ecosystem.config.js .
 
-# Start all services using PM2 with environment variable substitution
-CMD ["/bin/sh", "-c", "\
-    envsubst '\$PORT' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && \
-    pm2-runtime ecosystem.config.js \
-    "]
+# Start Nginx and services using PM2
+CMD sh -c "envsubst '\$PORT' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && pm2-runtime ecosystem.config.js && nginx -g 'daemon off;'"
