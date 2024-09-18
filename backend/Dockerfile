@@ -11,6 +11,9 @@ WORKDIR /usr/src/app
 # Expose the application port
 EXPOSE 3000
 
+# Switch to root user, install necessary packages, and switch back to pptruser
+USER root
+
 # Install dependencies required for running Chrome in headless mode
 RUN apt-get update && \
     apt-get install -y \
@@ -38,6 +41,9 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+# Set the correct user back for running Puppeteer
+USER pptruser
+
 # Copy package.json and package-lock.json files
 COPY package*.json ./
 
@@ -59,4 +65,4 @@ RUN tsc
 ENV DISPLAY=:99
 
 # Command to run the application
-CMD ["node", "dist/app.js"]
+CMD ["node", "dist/index.js"]
