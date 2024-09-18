@@ -1,22 +1,9 @@
-# Base image: Use Puppeteer with Node.js
-FROM ghcr.io/puppeteer/puppeteer:23.0.2
+# Stage 1: Use Puppeteer image to install and build your application
+FROM ghcr.io/puppeteer/puppeteer:23.0.2 AS builder
 
-# Set environment variables to skip Chromium download
+# Set environment variables for Puppeteer
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
-
-# Install dependencies for Nginx and build tools
-RUN apt-get update && apt-get install -y \
-    nginx \
-    gettext \
-    python3 \
-    make \
-    g++ \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install PM2 globally
-RUN npm install pm2 -g
 
 # Set the working directory
 WORKDIR /app
@@ -26,21 +13,25 @@ COPY backend/ ./backend/
 
 # Install dependencies and build 'previsiones'
 WORKDIR /app/backend/previsiones
-RUN npm install && npm run build
+RUN npm install
+RUN npm run build
 
 # Install dependencies and build 'facturador'
 WORKDIR /app/backend/facturador
-RUN npm install && npm run build
+RUN npm install
+RUN npm run build
 
-# Copy Nginx configuration template
-WORKDIR /app
-COPY backend/nginx/nginx.conf.template /etc/nginx/nginx.conf.template
+# Stage 2: Final production image with Node.js and Puppeteer built code
+FROM node:20-alpine
+
+# Copy the built application from the builder stage
+COPY --from=builder /app /app
+
+# Install PM2 globally
+RUN npm install pm2 -g
 
 # Expose the necessary port
 EXPOSE ${PORT}
 
-# Copy the PM2 ecosystem file
-COPY ecosystem.config.js .
-
 # Start Nginx and services using PM2
-CMD sh -c "envsubst '\$PORT' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && pm2-runtime ecosystem.config.js"
+CMD ["pm2-runtime", "ecosystem.config.js"]
