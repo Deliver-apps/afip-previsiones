@@ -1,4 +1,4 @@
-# Use an official Puppeteer image
+# Use a Puppeteer image base
 FROM ghcr.io/puppeteer/puppeteer:23.0.2
 
 # Set environment variables
@@ -11,14 +11,14 @@ WORKDIR /usr/src/app
 # Expose the application port
 EXPOSE 3000
 
-# Copy the package.json and package-lock.json files
+# Copy package.json and package-lock.json files
 COPY package*.json ./
 
 # Install npm dependencies
-RUN npm install
+RUN npm install --unsafe-perm
 
-# Install TypeScript globally
-RUN npm install -g typescript
+# Install TypeScript globally with sudo
+RUN sudo npm install -g typescript --unsafe-perm
 
 # Copy the rest of the application code
 COPY . .
