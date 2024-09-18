@@ -11,12 +11,15 @@ WORKDIR /usr/src/app
 # Expose the application port
 EXPOSE 3000
 
-# Switch to root user, install necessary packages, and switch back to pptruser
+# Switch to root user to install necessary packages
 USER root
 
 # Install dependencies required for running Chrome in headless mode
 RUN apt-get update && \
     apt-get install -y \
+    wget \
+    gnupg \
+    ca-certificates \
     libnss3 \
     libxss1 \
     libasound2 \
@@ -41,7 +44,7 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Set the correct user back for running Puppeteer
+# Switch back to non-root user
 USER pptruser
 
 # Copy package.json and package-lock.json files
@@ -50,7 +53,7 @@ COPY package*.json ./
 # Install npm dependencies with unsafe-perm
 RUN npm install --unsafe-perm
 
-# Switch to root user, install TypeScript, and switch back to pptruser
+# Install TypeScript globally as root
 USER root
 RUN npm install -g typescript --unsafe-perm
 USER pptruser
@@ -65,4 +68,4 @@ RUN tsc
 ENV DISPLAY=:99
 
 # Command to run the application
-CMD ["node", "dist/index.js"]
+CMD ["node", "dist/app.js"]
