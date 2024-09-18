@@ -46,6 +46,7 @@ export const individualScraper = async ({
     if (config.nodeEnv === "production") {
       browser = await puppeteer.launch({
         headless: true,
+        executablePath: config.chromeExecutablePath,
         args: [
           "--no-sandbox",
           "--disable-setuid-sandbox",
