@@ -7,8 +7,6 @@ module.exports = {
       env: {
         PORT: process.env.PREVISIONES_PORT || 3001,
         NODE_ENV: "production",
-        PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true",
-        PUPPETEER_EXECUTABLE_PATH: "/usr/bin/google-chrome-stable",
       },
     },
     {

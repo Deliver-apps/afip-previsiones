@@ -1,13 +1,19 @@
 # Base image
 FROM node:20-alpine
 
-# Install dependencies for Nginx and build tools
+# Install dependencies for Nginx, Chromium, and build tools
 RUN apk update && apk add --no-cache \
     nginx \
     gettext \
     python3 \
     make \
-    g++
+    g++ \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont
 
 # Install PM2 globally
 RUN npm install pm2 -g
@@ -37,6 +43,9 @@ EXPOSE ${PORT}
 
 # Copy the PM2 ecosystem file
 COPY ecosystem.config.js .
+
+# Set environment variable for Puppeteer to use Chromium
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
 # Start Nginx and services using PM2
 CMD sh -c "envsubst '\$PORT' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && pm2-runtime ecosystem.config.js && nginx -g 'daemon off;'"
