@@ -13,13 +13,7 @@ RUN apk update && apk add --no-cache \
     gettext \
     python3 \
     make \
-    g++ \
-    chromium \
-    nss \
-    freetype \
-    harfbuzz \
-    ca-certificates \
-    ttf-freefont
+    g++
 
 # Install PM2 globally
 RUN npm install pm2 -g
