@@ -34,4 +34,6 @@ RUN npm install pm2 -g
 EXPOSE ${PORT}
 
 # Start Nginx and services using PM2
-CMD ["pm2-runtime", "ecosystem.config.js"]
+
+# Start Nginx and services using PM2
+CMD sh -c "envsubst '\$PORT' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && pm2-runtime ecosystem.config.js"
