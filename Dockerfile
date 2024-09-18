@@ -15,6 +15,8 @@ RUN npm install pm2 -g
 # Set the working directory
 WORKDIR /app
 
+# Copy the backend code
+COPY backend/ ./backend/
 # Stage 1: Copy the Puppeteer build from previsiones Dockerfile
 COPY backend/previsiones/Dockerfile ./previsiones/Dockerfile
 COPY backend/previsiones/ ./previsiones
