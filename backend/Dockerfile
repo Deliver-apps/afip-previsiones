@@ -1,42 +1,58 @@
-# Stage 1: Build the TypeScript code
-FROM ghcr.io/puppeteer/puppeteer:23.0.2 AS build
+# Use an official Node.js LTS base image
+FROM node:18-slim
 
-# Set environment variables for Puppeteer
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
+# Install dependencies required for running Puppeteer
+RUN apt-get update \
+    && apt-get install -y \
+    wget \
+    gnupg \
+    ca-certificates \
+    && apt-get install -y \
+    libnss3 \
+    libxss1 \
+    libasound2 \
+    libx11-xcb1 \
+    libxcomposite1 \
+    libxcursor1 \
+    libxdamage1 \
+    libxrandr2 \
+    libgbm1 \
+    libgtk-3-0 \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libatk1.0-0 \
+    xfonts-base \
+    xfonts-75dpi \
+    fonts-liberation \
+    libappindicator3-1 \
+    libxshmfence1 \
+    libxslt1.1 \
+    --no-install-recommends \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd -r puppeteer \
+    && useradd -r -g puppeteer -G audio,video puppeteer \
+    && mkdir -p /home/puppeteer/Downloads \
+    && chown -R puppeteer:puppeteer /home/puppeteer
 
-# Set the working directory
-WORKDIR /usr/src/app
+# Create and change to the app directory
+WORKDIR /app
 
-# Copy package.json and package-lock.json (if available)
+# Copy package.json and package-lock.json and install dependencies
 COPY package*.json ./
-
-# Install dependencies, including devDependencies
 RUN npm install
 
 # Copy the rest of the application code
 COPY . .
 
-# Compile TypeScript code to JavaScript
+# Compile TypeScript to JavaScript
 RUN npm run build
 
-# Stage 2: Run the compiled JavaScript code
-FROM ghcr.io/puppeteer/puppeteer:23.0.2
+# Set the environment to "production"
+ENV NODE_ENV=production
 
-# Set environment variables for Puppeteer
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
+# Specify user to run the app
+USER puppeteer
 
-# Set the working directory
-WORKDIR /usr/src/app
-
-# Copy only the necessary files from the build stage
-COPY --from=build /usr/src/app/package*.json ./
-COPY --from=build /usr/src/app/node_modules ./node_modules
-COPY --from=build /usr/src/app/dist ./dist
-
-# Expose the application port
-EXPOSE 3000
-
-# Start the application using the compiled JavaScript
-CMD [ "node", "dist/index.js" ]
+# Command to start the application
+CMD ["node", "dist/index.js"]
