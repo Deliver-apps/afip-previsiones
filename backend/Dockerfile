@@ -1,5 +1,5 @@
 # Use an official Node.js LTS base image
-FROM node:18-slim
+FROM node:20-alpine
 
 # Install dependencies required for running Puppeteer
 RUN apt-get update \
@@ -41,6 +41,9 @@ WORKDIR /app
 # Copy package.json and package-lock.json and install dependencies
 COPY package*.json ./
 RUN npm install
+
+# Install Chrome for Puppeteer
+RUN npx puppeteer install
 
 # Copy the rest of the application code
 COPY . .
