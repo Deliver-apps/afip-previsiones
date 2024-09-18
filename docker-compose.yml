@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./backend/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - previsiones
+      - facturador
+    networks:
+      - app-network
+
+  previsiones:
+    build:
+      context: .
+      dockerfile: Dockerfile.previsiones
+    ports:
+      - "3001:3001"
+    networks:
+      - app-network
+
+  facturador:
+    build:
+      context: .
+      dockerfile: Dockerfile.facturador
+    ports:
+      - "3002:3002"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

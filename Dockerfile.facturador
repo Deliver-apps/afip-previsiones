@@ -1,0 +1,14 @@
+FROM node:20-alpine
+
+WORKDIR /usr/src/app
+
+COPY backend/facturador/package*.json ./
+RUN npm install
+
+COPY backend/facturador ./
+
+RUN npm run build
+
+EXPOSE 3002
+
+CMD ["node", "dist/index.js"]
