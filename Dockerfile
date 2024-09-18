@@ -1,4 +1,4 @@
-# Base image for Node.js
+# Base image
 FROM node:20-alpine
 
 # Install dependencies for Nginx and build tools
@@ -15,9 +15,13 @@ RUN npm install pm2 -g
 # Set the working directory
 WORKDIR /app
 
-# Stage 1: Copy the Puppeteer build from previsiones Dockerfile
-COPY backend/previsiones/Dockerfile ./previsiones/Dockerfile
-COPY backend/previsiones/ ./previsiones
+# Copy the backend code
+COPY backend/ ./backend/
+
+# Install dependencies and build 'previsiones'
+WORKDIR /app/backend/previsiones
+RUN npm install
+RUN npm run build
 
 # Install dependencies and build 'facturador'
 WORKDIR /app/backend/facturador
@@ -35,4 +39,4 @@ EXPOSE ${PORT}
 COPY ecosystem.config.js .
 
 # Start Nginx and services using PM2
-CMD sh -c "envsubst '\$PORT' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && pm2-runtime ecosystem.config.js"
+CMD sh -c "envsubst '\$PORT' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && pm2-runtime ecosystem.config.js && nginx -g 'daemon off;'"
