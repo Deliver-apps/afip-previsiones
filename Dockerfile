@@ -1,13 +1,7 @@
 # Base image
 FROM node:20-alpine
-# Base image from Puppeteer
-FROM ghcr.io/puppeteer/puppeteer:23.0.2
-# Set environment variables to skip Chromium download
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
 
-
-# Install dependencies for Nginx, Chromium, and build tools
+# Install dependencies for Nginx and build tools
 RUN apk update && apk add --no-cache \
     nginx \
     gettext \
