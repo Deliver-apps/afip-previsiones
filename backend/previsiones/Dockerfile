@@ -1,55 +1,36 @@
-# Stage 1: Build the TypeScript code for 'previsiones'
-FROM ghcr.io/puppeteer/puppeteer:23.0.2 AS build-previsiones
+# Stage 1: Build Stage for 'previsiones' and 'facturador'
+FROM ghcr.io/puppeteer/puppeteer:23.0.2 AS build
 
 # Set environment variables for Puppeteer
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
 
 # Set the working directory
-WORKDIR /usr/src/app/previsiones
+WORKDIR /usr/src/app
 
-# Copy package.json and package-lock.json for 'previsiones'
+# Copy the package.json and package-lock.json for both services
 COPY package*.json ./
 
-# Install dependencies
+# Install dependencies for both services
 RUN npm install
 
-# Copy the rest of the application code for 'previsiones'
+# Copy the rest of the application code
 COPY . .
 
-# Compile TypeScript to JavaScript
-RUN npm run build
+# Expose the port
+EXPOSE 3000
 
-# Stage 2: Build the TypeScript code for 'facturador'
-FROM ghcr.io/puppeteer/puppeteer:23.0.2 AS build-facturador
-
-# Set the working directory for 'facturador'
-WORKDIR /usr/src/app/facturador
-
-# Copy package.json and package-lock.json for 'facturador'
-COPY ../facturador/package*.json ./
-
-# Install dependencies for 'facturador'
-RUN npm install
-
-# Copy the rest of the application code for 'facturador'
-COPY ../facturador ./
-
-# Compile TypeScript to JavaScript
-RUN npm run build
-
-# Stage 3: Set up Nginx with both services
+# Stage 2: Set up Nginx with the services
 FROM nginx:alpine
 
-# Copy Nginx configuration file
-COPY ../nginx/nginx.conf /etc/nginx/nginx.conf
+# Copy the compiled application from the build stage
+COPY --from=build /usr/src/app /usr/src/app
 
-# Copy the built 'previsiones' and 'facturador' services
-COPY --from=build-previsiones /usr/src/app/previsiones/dist /usr/share/nginx/html/previsiones
-COPY --from=build-facturador /usr/src/app/facturador/dist /usr/share/nginx/html/facturador
+# Copy the Nginx configuration file
+COPY ./backend/nginx/nginx.conf /etc/nginx/nginx.conf
 
-# Expose the port Nginx will listen on
+# Expose the port that Nginx will listen on
 EXPOSE 80
 
-# Start Nginx
+# Start Nginx as the entry point
 CMD ["nginx", "-g", "daemon off;"]
