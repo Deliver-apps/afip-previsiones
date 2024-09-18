@@ -17,6 +17,9 @@ RUN npm install
 # Copy the rest of the application code
 COPY backend/previsiones ./
 
+# Ensure correct permissions on the 'dist' directory
+RUN mkdir -p dist && chmod -R 777 dist
+
 # Compile TypeScript to JavaScript
 RUN npm run build
 
@@ -33,6 +36,9 @@ RUN npm install
 
 # Copy the rest of the application code
 COPY backend/facturador ./
+
+# Ensure correct permissions on the 'dist' directory
+RUN mkdir -p dist && chmod -R 777 dist
 
 # Compile TypeScript to JavaScript
 RUN npm run build
