@@ -13,7 +13,24 @@ RUN apk update && apk add --no-cache \
     freetype \
     harfbuzz \
     ca-certificates \
-    ttf-freefont
+    ttf-freefont \
+    dumb-init \
+    udev \
+    ttf-freefont \
+    libx11 \
+    libxcomposite \
+    libxrandr \
+    libxi \
+    libxcursor \
+    libxdamage \
+    libxtst \
+    libnss \
+    libnspr \
+    libxss \
+    libxshmfence \
+    mesa-dri-gallium \
+    mesa-gles \
+    mesa-dri-swrast
 
 # Install PM2 globally
 RUN npm install pm2 -g
@@ -46,6 +63,12 @@ COPY ecosystem.config.js .
 
 # Set environment variable for Puppeteer to use Chromium
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
+# Add the necessary environment variable for Puppeteer to run in headless mode
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    CHROME_BIN=/usr/bin/chromium-browser \
+    CHROME_PATH=/usr/lib/chromium/ \
+    DISPLAY=:99
 
 # Start Nginx and services using PM2
 CMD sh -c "envsubst '\$PORT' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && pm2-runtime ecosystem.config.js && nginx -g 'daemon off;'"
