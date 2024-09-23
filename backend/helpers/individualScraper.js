@@ -45,6 +45,7 @@ const individualScraper = async ({
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
+        "--single-process",
         "--no-zygote",
       ],
     });
@@ -176,7 +177,7 @@ const buyBook = async (page) => {
   await page.click("#lnkImportarAFIP");
 
   await page.waitForFunction(() => document.readyState === "complete");
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  await new Promise((resolve) => setTimeout(resolve, 1_000));
 
   await page.waitForSelector("#btnImportarAFIPImportar");
   await page.click("#btnImportarAFIPImportar");
@@ -188,7 +189,7 @@ const buyBook = async (page) => {
   await page.click("#btnTareasCerrar");
 
   await page.waitForFunction(() => document.readyState === "complete");
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  await new Promise((resolve) => setTimeout(resolve, 1_000));
 
   await page.evaluate(() => {
     const link = Array.from(document.querySelectorAll("a")).find((element) =>
@@ -207,16 +208,16 @@ const buyBook = async (page) => {
 const sellBook = async (page) => {
   logger.info("Opening sell book...");
   await page.waitForFunction(() => document.readyState === "complete");
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  await new Promise((resolve) => setTimeout(resolve, 1_000));
   await page.waitForSelector("#btnDropdownImportar");
   await page.click("#btnDropdownImportar");
   await page.waitForFunction(() => document.readyState === "complete");
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  await new Promise((resolve) => setTimeout(resolve, 1_000));
   await page.waitForSelector("#lnkImportarAFIP");
   await page.click("#lnkImportarAFIP");
 
   await page.waitForFunction(() => document.readyState === "complete");
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  await new Promise((resolve) => setTimeout(resolve, 1_000));
   await page.waitForSelector("#btnImportarAFIPImportar");
   await page.click("#btnImportarAFIPImportar");
 
@@ -226,12 +227,12 @@ const sellBook = async (page) => {
   await page.waitForSelector("#btnTareasCerrar");
   await page.click("#btnTareasCerrar");
   await page.waitForFunction(() => document.readyState === "complete");
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  await new Promise((resolve) => setTimeout(resolve, 1_000));
   await page.evaluate(() => {
     window.scrollTo(0, 1000);
   });
   await page.waitForFunction(() => document.readyState === "complete");
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  await new Promise((resolve) => setTimeout(resolve, 1_000));
   await page.evaluate(() => {
     const link = Array.from(document.querySelectorAll("a")).find((element) =>
       element.textContent.includes("Continuar al Libro Compras"),
@@ -244,7 +245,7 @@ const sellBook = async (page) => {
   });
 
   await page.waitForFunction(() => document.readyState === "complete");
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  await new Promise((resolve) => setTimeout(resolve, 1_000));
 };
 
 const openBooks = async (page) => {
@@ -261,7 +262,7 @@ const openBooks = async (page) => {
   });
   logger.error("Button clicked...");
   await page.waitForFunction(() => document.readyState === "complete");
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  await new Promise((resolve) => setTimeout(resolve, 1_000));
   logger.error("Waiting for body...");
   await page.waitForSelector("body");
   await page.evaluate(() => {
@@ -277,7 +278,7 @@ const openBooks = async (page) => {
   });
   logger.error("Button clicked...");
   await page.waitForFunction(() => document.readyState === "complete");
-  await new Promise((resolve) => setTimeout(resolve, 3000));
+  await new Promise((resolve) => setTimeout(resolve, 3_000));
   logger.error("Waiting for #operacion...");
   const ningunaOperacionExists2 = await page.$("#ningunaOperacion");
   if (ningunaOperacionExists2) {
@@ -288,17 +289,17 @@ const openBooks = async (page) => {
   }
   logger.error("Waiting for #btnLibroVentas...");
   await page.waitForFunction(() => document.readyState === "complete");
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  await new Promise((resolve) => setTimeout(resolve, 1_000));
   await page.waitForSelector("#btnLibroVentas");
 
   await page.click("#btnLibroVentas");
   logger.error("Waiting for #btnLibroCompras...");
-  await new Promise((resolve) => setTimeout(resolve, 4000));
+  await new Promise((resolve) => setTimeout(resolve, 4_000));
 };
 
 const newDeclaration = async (page) => {
   await page.waitForFunction(() => document.readyState === "complete");
-  await new Promise((resolve) => setTimeout(resolve, 3000));
+  await new Promise((resolve) => setTimeout(resolve, 3_000));
   try {
     logger.info("Opening new declaration...");
     await page.evaluate(() => {
@@ -340,7 +341,7 @@ const getNewPage = async (browser) => {
     logger.debug("New page created...");
 
     // if you know the page needs additional time to load fully, use a fixed delay
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 2_000));
 
     logger.info("New page opened...");
 
@@ -356,13 +357,13 @@ const loginToAfip = async (page, username, password) => {
     logger.info(`Logging in to AFIP...${username}`);
     await page.waitForFunction(() => document.readyState === "complete");
     await page.waitForSelector("#F1\\:username", {
-      timeout: 6_000,
+      timeout: 16_000,
     });
     await page.type("#F1\\:username", username);
     await page.click("#F1\\:btnSiguiente");
 
     await page.waitForSelector("#F1\\:password", {
-      timeout: 6_000,
+      timeout: 16_000,
     });
     await page.type("#F1\\:password", password);
     logger.info("Clicking login button...");
@@ -372,7 +373,7 @@ const loginToAfip = async (page, username, password) => {
     const fileName = `screenshots/screenshot-${Date.now()}.png`;
     await uploadToSpaces(screenshotBuffer, fileName);
     console.error("Login failed, retrying...", error.message);
-    await retryWithDelay(page, "#F1\\:password", 3000);
+    await retryWithDelay(page, "#F1\\:password", 3_000);
   }
 };
 
@@ -380,9 +381,9 @@ const navigateToPortalIVA = async (page) => {
   try {
     logger.info("Navigating to Portal IVA...");
     await page.waitForFunction(() => document.readyState === "complete");
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1_000));
     await page.waitForSelector("#buscadorInput", {
-      timeout: 6_000,
+      timeout: 16_000,
     });
     await page.type("#buscadorInput", "Portal iva");
     await page.click("#rbt-menu-item-0");
@@ -397,14 +398,14 @@ const navigateToPortalIVA = async (page) => {
 const switchCompanyContext = async (page, cuitCompany) => {
   try {
     await page.waitForFunction(() => document.readyState === "complete");
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1_000));
     logger.info(`Switching company context to ${cuitCompany}...`);
     await page.waitForSelector('a[title="cambio relación"]', {
-      timeout: 6_000,
+      timeout: 16_000,
     });
     await page.click('a[title="cambio relación"]');
     await page.waitForFunction(() => document.readyState === "complete");
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1_000));
 
     const cuitCompanyText = formatCUIT(cuitCompany);
     const targetElementFound = await page.evaluate((cuitCompanyText) => {
@@ -427,7 +428,7 @@ const switchCompanyContext = async (page, cuitCompany) => {
     }
     try {
       await page.waitForSelector('a[title="Representar a..."]', {
-        timeout: 6_000,
+        timeout: 16_000,
       });
       await page.evaluate((cuitCompanyText) => {
         const elements = Array.from(
@@ -458,7 +459,7 @@ const checkAndValidatePeriod = async (page) => {
     await page.waitForFunction(() => document.readyState === "complete");
     logger.info("Checking and validating period...");
     await page.waitForSelector("#periodo", {
-      timeout: 6_000,
+      timeout: 16_000,
     });
     const optionsCount = await page.evaluate(() => {
       const selectElement = document.querySelector("#periodo");
@@ -500,10 +501,10 @@ const extractData = async (
   try {
     logger.info(`Extracting data...${realName}`);
     await page.waitForFunction(() => document.readyState === "complete");
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 2_000));
     logger.debug("Waiting for selector...");
     await page.waitForSelector("#importeDJV1", {
-      timeout: 5_000,
+      timeout: 15_000,
     });
 
     const extractedData = await page.evaluate(() => {
@@ -553,7 +554,7 @@ const retryWithDelay = async (page, selector, delay) => {
     await new Promise((resolve) => setTimeout(resolve, delay));
     await page.waitForFunction(() => document.readyState === "complete");
     await page.waitForSelector(selector, {
-      timeout: 6_000,
+      timeout: 16_000,
     });
   } catch (error) {
     const screenshotBuffer = await page.screenshot({ encoding: "binary" });

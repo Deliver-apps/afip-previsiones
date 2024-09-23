@@ -7,7 +7,7 @@ const { addJobToQueue, updateJob, getJobById } = require("../helpers/cache");
 
 const router = express.Router();
 
-const individualScraperWithTimeout = async (campos, timeout = 200_000) => {
+const individualScraperWithTimeout = async (campos, timeout = 400_000) => {
   return Promise.race([
     individualScraper(campos),
     new Promise((_, reject) =>
@@ -39,7 +39,7 @@ router.post("/previsiones", async (req, res) => {
     for (const campos of data) {
       try {
         const result = await individualScraperWithTimeout(campos);
-        
+
         if (result.error) {
           throw new Error(result.error);
         }
@@ -65,18 +65,18 @@ router.post("/previsiones", async (req, res) => {
 });
 
 router.get("/previsiones/job/:id", async (req, res) => {
-  const {id} = req.params;
+  const { id } = req.params;
 
   const response = await getJobById(id);
 
-  if(!response) {
+  if (!response) {
     return res.status(401).send({
-      message: 'Error Detectando El job de previsiones'
-    })
+      message: "Error Detectando El job de previsiones",
+    });
   }
 
-  res.status(200).send(response)
-})
+  res.status(200).send(response);
+});
 
 router.post("/comprobantes", async (req, res) => {
   const { url, username, password, range, type } = req.body;
