@@ -272,7 +272,7 @@ const openBooks = async (page) => {
     if (button) {
       button.click();
     } else {
-      console.log("Button not found");
+      logger.error("Button not found");
     }
     window.scrollTo(0, 200);
   });
@@ -288,6 +288,19 @@ const openBooks = async (page) => {
     await page.click("#btnGuardar");
   }
   logger.error("Waiting for #btnLibroVentas...");
+  await page.waitForFunction(() => document.readyState === "complete");
+  await new Promise((resolve) => setTimeout(resolve, 1_000));
+  await page.evaluate(() => {
+    const button = document.querySelector(
+      'button[aria-label="Sin texto (iva.btn.home.liva.alt)"]',
+    );
+    if (button) {
+      button.click();
+    } else {
+      logger.error("Button not found");
+    }
+    window.scrollTo(0, 200);
+  });
   await page.waitForFunction(() => document.readyState === "complete");
   await new Promise((resolve) => setTimeout(resolve, 1_000));
   await page.waitForSelector("#btnLibroVentas");
