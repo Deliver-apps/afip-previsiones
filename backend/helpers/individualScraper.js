@@ -297,7 +297,7 @@ const openBooks = async (page) => {
     if (button) {
       button.click();
     } else {
-      logger.error("Button not found");
+      console.error("Button not found");
     }
     window.scrollTo(0, 200);
   });
