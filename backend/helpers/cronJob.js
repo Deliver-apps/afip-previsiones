@@ -13,10 +13,11 @@ function startCronJob() {
 
       const data = await getDataClients();
       logger.debug("Data clients", data);
+      const dataFiltered = data.filter((client) => client.automatic);
 
       const helper = [];
       try {
-        for (const campos of data) {
+        for (const campos of dataFiltered) {
           try {
             const result =
               await scrapeRoute.individualScraperWithTimeout(campos);
@@ -43,11 +44,17 @@ function startCronJob() {
     },
   );
 
-  cron.schedule("0 0 * * 1-5", async () => {
-    logger.debug("Running cron job to clean cache");
-    deleteJob();
-  })
+  cron.schedule(
+    "0 0 * * *",
+    async () => {
+      logger.debug("Running cron job to clean cache");
+      process.exit(0);
+    },
+    {
+      scheduled: true,
+      timezone: "America/Argentina/Buenos_Aires", // Set your timezone here
+    },
+  );
 }
-
 
 module.exports = { startCronJob };

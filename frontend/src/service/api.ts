@@ -4,16 +4,22 @@ import { User } from "@src/models";
 import axios, { AxiosError, AxiosResponse } from "axios";
 import Cookies from "js-cookie";
 
-// export const generateComprobanteReq = async (data) => {
-//   try {
-
-//     const response = await axios.post(`${apiUrl}api/scrape/comprobantes`,{...data, url: afipUrl});
-
-//     return response.data;
-//   } catch (error) {
-//     console.error("Error generating comprobante:", error);
-//   }
-// };
+export const resetServer = async () => {
+  try {
+    await axios.post(
+      `${apiUrl}api/scrape/reset`,
+      {},
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${Cookies.get("authToken")}`,
+        },
+      },
+    );
+  } catch (error) {
+    console.error("Error reseting server:", error);
+  }
+};
 
 interface ResponsePrevisiones {
   sucess: boolean;
@@ -28,7 +34,7 @@ interface ResponseJob {
 }
 
 export const checkJobStatus = async (
-  jobId: number
+  jobId: number,
 ): Promise<AxiosResponse<ResponseJob> | AxiosError> => {
   try {
     const response = await axios.get(
@@ -38,7 +44,7 @@ export const checkJobStatus = async (
           "Content-Type": "application/json",
           Authorization: `Bearer ${Cookies.get("authToken")}`,
         },
-      }
+      },
     );
     return response;
   } catch (error) {
@@ -48,10 +54,10 @@ export const checkJobStatus = async (
 
     return error as AxiosError;
   }
-}
+};
 
 export const generatePrevisiones = async (
-  data: User[]
+  data: User[],
 ): Promise<AxiosResponse<ResponsePrevisiones> | AxiosError> => {
   try {
     const response = await axios.post(
@@ -65,7 +71,7 @@ export const generatePrevisiones = async (
           Authorization: `Bearer ${Cookies.get("authToken")}`,
         },
         timeout: 30_000 * 2 * data.length,
-      }
+      },
     );
     return response;
   } catch (error) {

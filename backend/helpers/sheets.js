@@ -37,42 +37,42 @@ const formatMoneyFields = (campos) => {
   return {
     ventasNeto: moneyFormat(
       stringToNumber(campos.ventas.operaciones.neto) -
-        stringToNumber(campos.ventas.notasDeCredito.neto)
+        stringToNumber(campos.ventas.notasDeCredito.neto),
     ),
     ventasIVA: moneyFormat(
       stringToNumber(campos.ventas.operaciones.debito) -
-        stringToNumber(campos.ventas.notasDeCredito.debito)
+        stringToNumber(campos.ventas.notasDeCredito.debito),
     ),
     ventasTotal: moneyFormat(
       stringToNumber(campos.ventas.operaciones.neto) -
         stringToNumber(campos.ventas.notasDeCredito.neto) +
         stringToNumber(campos.ventas.operaciones.debito) -
-        stringToNumber(campos.ventas.notasDeCredito.debito)
+        stringToNumber(campos.ventas.notasDeCredito.debito),
     ),
     comprasNeto: moneyFormat(
       stringToNumber(campos.compras.operaciones.neto) -
-        stringToNumber(campos.compras.notasDeCredito.neto)
+        stringToNumber(campos.compras.notasDeCredito.neto),
     ),
     comprasIVA: moneyFormat(
       stringToNumber(campos.compras.operaciones.debito) -
-        stringToNumber(campos.compras.notasDeCredito.debito)
+        stringToNumber(campos.compras.notasDeCredito.debito),
     ),
     comprasTotal: moneyFormat(
       stringToNumber(campos.compras.operaciones.neto) -
         stringToNumber(campos.compras.notasDeCredito.neto) +
         stringToNumber(campos.compras.operaciones.debito) -
-        stringToNumber(campos.compras.notasDeCredito.debito)
+        stringToNumber(campos.compras.notasDeCredito.debito),
     ),
   };
 };
 
 const transposeData = (data) => {
   return data[0].map(
-    (_, colIndex) => data.map((row) => row[colIndex][1]) // Extract only the values, ignoring the keys
+    (_, colIndex) => data.map((row) => row[colIndex][1]), // Extract only the values, ignoring the keys
   );
 };
 
-const putSheetData = async (data) => {
+const putSheetData = async (data, errors = []) => {
   logger.debug("Putting data into Google Sheets");
   logger.debug(data);
   if (!data || data.length === 0) {
@@ -91,7 +91,7 @@ const putSheetData = async (data) => {
   const currentTime = new Date(
     new Date().toLocaleString("en-US", {
       timeZone: "America/Argentina/Buenos_Aires",
-    })
+    }),
   );
 
   const day = currentTime.getDate().toString().padStart(2, "0");
@@ -118,65 +118,12 @@ const putSheetData = async (data) => {
     },
   });
 
-  // const horizontalValues = [
-  //   [
-  //     "Representado",
-  //     "CUIT",
-  //     "Ventas Neto",
-  //     "Ventas IVA",
-  //     "Ventas Total",
-  //     "Compras Neto",
-  //     "Compras IVA",
-  //     "Compras Total",
-  //     "A Pagar / A Favor",
-  //     "Monto",
-  //   ],
-  //   ...data.map((campos) => {
-  //     const ventasDebito = stringToNumber(campos.ventas.operaciones.debito);
-  //     const ventasCreditoDebito = stringToNumber(
-  //       campos.ventas.notasDeCredito.debito
-  //     );
-  //     const comprasDebito = stringToNumber(campos.compras.operaciones.debito);
-  //     const comprasCreditoDebito = stringToNumber(
-  //       campos.compras.notasDeCredito.debito
-  //     );
+  const response = await sheets.spreadsheets.get({
+    spreadsheetId,
+  });
 
-  //     const result =
-  //       ventasDebito -
-  //       ventasCreditoDebito -
-  //       comprasDebito -
-  //       comprasCreditoDebito;
-
-  //     return [
-  //       campos.nameToShow,
-  //       campos.cuit,
-  //       moneyFormat(
-  //         stringToNumber(campos.ventas.operaciones.neto) -
-  //           stringToNumber(campos.ventas.notasDeCredito.neto)
-  //       ),
-  //       moneyFormat(ventasDebito - ventasCreditoDebito),
-  //       moneyFormat(
-  //         stringToNumber(campos.ventas.operaciones.neto) -
-  //           stringToNumber(campos.ventas.notasDeCredito.neto) +
-  //           ventasDebito -
-  //           ventasCreditoDebito
-  //       ),
-  //       moneyFormat(
-  //         stringToNumber(campos.compras.operaciones.neto) -
-  //           stringToNumber(campos.compras.notasDeCredito.neto)
-  //       ),
-  //       moneyFormat(comprasDebito - comprasCreditoDebito),
-  //       moneyFormat(
-  //         stringToNumber(campos.compras.operaciones.neto) -
-  //           stringToNumber(campos.compras.notasDeCredito.neto) +
-  //           comprasDebito -
-  //           comprasCreditoDebito
-  //       ),
-  //       result < 0 ? "A Favor" : "A Pagar",
-  //       moneyFormat(result),
-  //     ];
-  //   }),
-  // ];
+  const sheet = response.data.sheets[0];
+  const sheetId = sheet.properties.sheetId;
 
   // Define the vertical table data with some blank rows for spacing
   const allVerticalValues = data.map((campos) => {
@@ -196,15 +143,26 @@ const putSheetData = async (data) => {
     ];
   });
 
+  const errorVerticalValues = errors.map((error) => {
+    const { username, real_name, is_company, company_name } = error;
+    const nameToShow = is_company ? company_name : real_name;
+    return [
+      ["Razón Social", nameToShow],
+      ["CUIT", username],
+      ["Error", "Error Prevision"],
+    ];
+  });
+
+  const flatenErrorVerticalValues = errorVerticalValues.flat();
   // Write the vertical table to Google Sheets starting after a few rows down (e.g., B10)
   // Transpose the values to place them horizontally
   const transposedValues = allVerticalValues[0].map((_, colIndex) =>
-    allVerticalValues.map((row) => row[colIndex])
+    allVerticalValues.map((row) => row[colIndex]),
   );
 
   // Flatten each cell to ensure it's a simple string or number
   const flattenedTransposedValues = transposedValues.map((row) =>
-    row.map((cell) => (Array.isArray(cell) ? cell.join(" ") : cell))
+    row.map((cell) => (Array.isArray(cell) ? cell.join(" ") : cell)),
   );
 
   const horizontalValues = [
@@ -242,7 +200,52 @@ const putSheetData = async (data) => {
   await sheets.spreadsheets.values.update({
     auth: client,
     spreadsheetId,
-    range: `${formattedTime}!A${data.length + 10}`, // Adjust the starting position as needed
+    range: `${formattedTime}!A${data.length + 3}`, // Adjust range to where the data should be inserted
+    valueInputOption: "USER_ENTERED",
+    resource: {
+      values: flatenErrorVerticalValues,
+    },
+  });
+
+  const startRow = data.length + 2;
+  const endRow = startRow + flatenErrorVerticalValues.length * 2;
+
+  await sheets.spreadsheets.batchUpdate({
+    auth: client,
+    spreadsheetId,
+    resource: {
+      requests: [
+        {
+          repeatCell: {
+            range: {
+              sheetId: sheetId, // Ensure this is the correct sheetId
+              startRowIndex: startRow, // The row where errors start
+              endRowIndex: endRow, // End row (exclusive)
+              startColumnIndex: 0, // Starting column (0 = column A)
+              endColumnIndex: 2, // Adjust for the number of columns you're writing data into
+            },
+            cell: {
+              userEnteredFormat: {
+                textFormat: {
+                  foregroundColor: {
+                    red: 1,
+                    green: 0,
+                    blue: 0,
+                  },
+                },
+              },
+            },
+            fields: "userEnteredFormat.textFormat.foregroundColor",
+          },
+        },
+      ],
+    },
+  });
+
+  sheets.spreadsheets.values.update({
+    auth: client,
+    spreadsheetId,
+    range: `${formattedTime}!A${data.length + errors.length + 8}`, // Adjust the starting position as needed
     valueInputOption: "USER_ENTERED",
     resource: {
       values: flattenedTransposedValues,

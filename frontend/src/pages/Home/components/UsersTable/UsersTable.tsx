@@ -19,12 +19,23 @@ import {
 import CircularProgress from "@mui/material/CircularProgress";
 import spanishLocaleText from "@src/helpers/spanish.helper";
 import { EditForm } from "../EditForm";
-import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { showErrorToast, showSuccessToast } from "@src/helpers/toastifyCustom";
-import { checkJobStatus, generatePrevisiones } from "@src/service/api";
+import {
+  checkJobStatus,
+  generatePrevisiones,
+  resetServer,
+} from "@src/service/api";
 import { isAxiosError } from "axios";
 import { CustomModal } from "../CustomModal";
+import { ToastContainer, toast } from "react-toastify";
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+} from "@mui/material";
 
 export type UsersTableProps = {};
 
@@ -51,41 +62,42 @@ const UsersTable: React.FC<UsersTableProps> = () => {
   const [jobId, setJobId] = useState(0);
   const [timeExpected, setTimeExpected] = useState(0);
   const [isActiveInterval, setIsActiveInterval] = useState(false);
+  const [openDialog, setOpenDialog] = useState(false);
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
     if (isActiveInterval) {
-      console.log("Intervalo activo")
+      console.log("Intervalo activo");
       interval = setInterval(async () => {
         const checked = await checkJobStatus(jobId);
-        console.log("Intervalo ejecutado")
+        console.log("Intervalo ejecutado");
         if (isAxiosError(checked)) {
           console.error("Error checking job status:", checked);
           showErrorToast(
             "Error en la consulta a la API de la Prevision",
             "top-right",
-            4000
-          )
+            4000,
+          );
           setFailedOpen(true);
           setIsActiveInterval(false);
           setLoadingPrevisiones(false);
-        } else if (checked.data.state === 'finished') {
-            setIsActiveInterval(false);
-            setLoadingPrevisiones(false);
-            showSuccessToast(
-              "Previsiones generadas correctamente",
-              "top-right",
-              4000
-            );
-          }
+        } else if (checked.data.state === "finished") {
+          setIsActiveInterval(false);
+          setLoadingPrevisiones(false);
+          showSuccessToast(
+            "Previsiones generadas correctamente",
+            "top-right",
+            4000,
+          );
+        }
       }, timeExpected);
-      console.log("Intervalo creado")
+      console.log("Intervalo creado");
     } else if (interval !== null) {
-      console.log("Intervalo desactivado")
+      console.log("Intervalo desactivado");
       clearInterval(interval);
       setLoadingPrevisiones(false);
     }
-  
+
     // Cleanup function to clear interval when component unmounts or dependency changes
     return () => {
       if (interval !== null) {
@@ -93,8 +105,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
         setLoadingPrevisiones(false);
       }
     };
-  }, [isActiveInterval]);  // Add timeExpected as a dependency
-  
+  }, [isActiveInterval]); // Add timeExpected as a dependency
 
   const handleCloseModal = () => setFailedOpen(false);
   const handleAcceptModal = () => {
@@ -143,34 +154,28 @@ const UsersTable: React.FC<UsersTableProps> = () => {
     try {
       const filteredUsers = filterBySelectedRows(selectedRows);
       const response = await generatePrevisiones(filteredUsers);
-      console.log(response)
-      if(isAxiosError(response)) {
+      console.log(response);
+      if (isAxiosError(response)) {
         showErrorToast(
           "Error en la consulta a la API de la Prevision",
           "top-right",
           4000,
         );
-
       } else {
-        console.log("NOt error")
+        console.log("NOt error");
         setJobId(response.data.jobId);
         setTimeExpected(response.data.usersLength * 100_000);
         setIsActiveInterval(true);
-        showSuccessToast(
-          "Iniciando consulta de usuarios",
-          "top-right",
-          4000
-        )
+        showSuccessToast("Iniciando consulta de usuarios", "top-right", 4000);
       }
-      
     } catch (error) {
-        console.error("An unexpected error occurred:", error);
-        showErrorToast(
-          "Error en la consulta a la API de la Prevision",
-          "top-right",
-          4000,
-        );
-      
+      console.error("An unexpected error occurred:", error);
+      showErrorToast(
+        "Error en la consulta a la API de la Prevision",
+        "top-right",
+        4000,
+      );
+
       setLoadingPrevisiones(false);
     }
   };
@@ -207,6 +212,16 @@ const UsersTable: React.FC<UsersTableProps> = () => {
         >
           {" "}
           Ir al Excel!
+        </Button>
+        <Button
+          sx={{
+            pb: 1.1,
+            color: "red",
+          }}
+          onClick={() => setOpenDialog(!openDialog)}
+        >
+          {" "}
+          Reiniciar Server...
         </Button>
       </Box>
     );
@@ -330,6 +345,24 @@ const UsersTable: React.FC<UsersTableProps> = () => {
     setUsers(stateUsers);
   }, [stateUsers]);
 
+  const handleShowDialog = () => {
+    toast.info("Do you want to proceed?", {
+      onClick: () => setOpenDialog(true),
+      autoClose: 3000,
+    });
+  };
+
+  const handleAccept = async () => {
+    console.log("Accepted!");
+    await resetServer();
+    setOpenDialog(false);
+  };
+
+  const handleCancel = () => {
+    console.log("Cancelled!");
+    setOpenDialog(false);
+  };
+
   return (
     <>
       <div
@@ -379,6 +412,30 @@ const UsersTable: React.FC<UsersTableProps> = () => {
         title="Previsiones falladas"
         description={descriptionModal}
       />
+      <div>
+        <ToastContainer />
+        <Dialog
+          open={openDialog}
+          onClose={handleCancel}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+        >
+          <DialogTitle id="alert-dialog-title">{"Confirm Action"}</DialogTitle>
+          <DialogContent>
+            <DialogContentText id="alert-dialog-description">
+              Seguro que quieres reiniciar el servidor?
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCancel} color="primary">
+              No
+            </Button>
+            <Button onClick={handleAccept} color="error" autoFocus>
+              Sí
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </div>
     </>
   );
 };

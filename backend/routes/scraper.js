@@ -47,14 +47,14 @@ router.post("/previsiones", async (req, res) => {
       } catch (error) {
         logger.error(error.message);
         responseFailed.push(campos);
-        if (responseFailed.length > 25) {
+        if (responseFailed.length > 55) {
           throw new Error(
             "Fallaron muchas solicitudes, se cancela la generación",
           );
         }
       }
     }
-    await putSheetData(helper);
+    await putSheetData(helper, responseFailed);
     updateJob(jobId, "finished");
     return;
   } catch (error) {
@@ -220,6 +220,14 @@ router.get("/test", (req, res) => {
   return res.json({
     ok: "todo ok",
   });
+});
+
+router.post("/reset", async (req, res) => {
+  try {
+    process.exit(0);
+  } catch (error) {
+    console.error("Error reseting server:", error);
+  }
 });
 
 module.exports = {
