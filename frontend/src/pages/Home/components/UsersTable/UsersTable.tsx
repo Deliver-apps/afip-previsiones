@@ -213,7 +213,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
           {" "}
           Ir al Excel!
         </Button>
-        <Button
+        {/* <Button
           sx={{
             pb: 1.1,
             color: "red",
@@ -222,7 +222,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
         >
           {" "}
           Reiniciar Server...
-        </Button>
+        </Button> */}
       </Box>
     );
   };
@@ -412,7 +412,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
         title="Previsiones falladas"
         description={descriptionModal}
       />
-      <div>
+      {/* <div>
         <ToastContainer />
         <Dialog
           open={openDialog}
@@ -435,7 +435,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
             </Button>
           </DialogActions>
         </Dialog>
-      </div>
+      </div> */}
     </>
   );
 };
