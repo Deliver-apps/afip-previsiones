@@ -368,7 +368,8 @@ const getNewPage = async (browser) => {
 const loginToAfip = async (page, username, password) => {
   try {
     logger.info(`Logging in to AFIP...${username}`);
-    await page.waitForFunction(() => document.readyState === "complete");
+    // await page.waitForFunction(() => document.readyState === "complete");
+    logger.info("Waiting for username...");
     await page.waitForSelector("#F1\\:username", {
       timeout: 16_000,
     });

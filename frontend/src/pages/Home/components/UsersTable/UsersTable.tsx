@@ -20,7 +20,11 @@ import CircularProgress from "@mui/material/CircularProgress";
 import spanishLocaleText from "@src/helpers/spanish.helper";
 import { EditForm } from "../EditForm";
 import "react-toastify/dist/ReactToastify.css";
-import { showErrorToast, showSuccessToast } from "@src/helpers/toastifyCustom";
+import {
+  showErrorToast,
+  showInfoToast,
+  showSuccessToast,
+} from "@src/helpers/toastifyCustom";
 import {
   checkJobStatus,
   generatePrevisiones,
@@ -28,7 +32,7 @@ import {
 } from "@src/service/api";
 import { isAxiosError } from "axios";
 import { CustomModal } from "../CustomModal";
-import { ToastContainer, toast } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 import {
   Dialog,
   DialogActions,
@@ -213,7 +217,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
           {" "}
           Ir al Excel!
         </Button>
-        {/* <Button
+        <Button
           sx={{
             pb: 1.1,
             color: "red",
@@ -222,7 +226,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
         >
           {" "}
           Reiniciar Server...
-        </Button> */}
+        </Button>
       </Box>
     );
   };
@@ -345,17 +349,15 @@ const UsersTable: React.FC<UsersTableProps> = () => {
     setUsers(stateUsers);
   }, [stateUsers]);
 
-  const handleShowDialog = () => {
-    toast.info("Do you want to proceed?", {
-      onClick: () => setOpenDialog(true),
-      autoClose: 3000,
-    });
-  };
-
   const handleAccept = async () => {
     console.log("Accepted!");
     await resetServer();
     setOpenDialog(false);
+    showInfoToast(
+      "Reiniciando servidor, espere un momento...",
+      "top-right",
+      4000,
+    );
   };
 
   const handleCancel = () => {
@@ -365,6 +367,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
 
   return (
     <>
+      <ToastContainer />
       <div
         style={{
           display: "flex",
@@ -404,7 +407,6 @@ const UsersTable: React.FC<UsersTableProps> = () => {
         dataUser={dataUser}
         handleEditUser={handleEditUser}
       />
-      <ToastContainer />
       <CustomModal
         open={failedOpen}
         onClose={handleCloseModal}
@@ -412,8 +414,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
         title="Previsiones falladas"
         description={descriptionModal}
       />
-      {/* <div>
-        <ToastContainer />
+      <div>
         <Dialog
           open={openDialog}
           onClose={handleCancel}
@@ -435,7 +436,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
             </Button>
           </DialogActions>
         </Dialog>
-      </div> */}
+      </div>
     </>
   );
 };
