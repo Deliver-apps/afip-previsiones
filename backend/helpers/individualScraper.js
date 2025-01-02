@@ -484,8 +484,13 @@ const checkAndValidatePeriod = async (page) => {
       const today = new Date();
       const year = today.getFullYear();
       const month = (today.getMonth() + 1).toString().padStart(2, "0");
-      const lastmonth = today.getMonth().toString().padStart(2, "0");
-      const period = `${year}${lastmonth}`;
+      const lastmonth =
+        today.getMonth().toString().padStart(2, "0") === "00"
+          ? "12"
+          : today.getMonth().toString().padStart(2, "0");
+      const final_year = lastmonth === "12" ? year - 1 : year;
+      const period = `${final_year}${lastmonth}`;
+      console.error("actual ", period, "nuevo", year, month);
       const selected = await page.select("#periodo", period);
 
       if (selected.length === 0) {
