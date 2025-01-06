@@ -1,5 +1,6 @@
 import AccountCircle from "@mui/icons-material/AccountCircle";
 import MoreIcon from "@mui/icons-material/MoreVert";
+import { Tab, Tabs } from "@mui/material";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
@@ -19,6 +20,41 @@ export default function PrimarySearchAppBar() {
     React.useState<null | HTMLElement>(null);
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
+  const [value, setValue] = React.useState(0);
+
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setValue(newValue);
+    console.log(newValue);
+    // Example: Navigate when tab changes
+    switch (newValue) {
+      case 0:
+        navigate("/home"); // “Home”
+        break;
+      case 1:
+        navigate("/veps"); // “Veps”
+        break;
+      case 2:
+        navigate("/analytics"); // “Analytics”
+        break;
+      case 3:
+        navigate("/reports"); // “Reports”
+        break;
+      default:
+        break;
+    }
+  };
+
+  React.useEffect(() => {
+    if (location.pathname.startsWith("/home")) {
+      setValue(0);
+    } else if (location.pathname.startsWith("/veps")) {
+      setValue(1);
+    } else if (location.pathname.startsWith("/analytics")) {
+      setValue(2);
+    } else if (location.pathname.startsWith("/reports")) {
+      setValue(3);
+    }
+  }, [location.pathname]);
 
   const isMenuOpen = Boolean(anchorEl);
   const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
@@ -35,6 +71,11 @@ export default function PrimarySearchAppBar() {
     setAnchorEl(null);
     dispatch(logout());
     navigate("/login");
+    handleMobileMenuClose();
+  };
+
+  const clickeOut = () => {
+    setAnchorEl(null);
     handleMobileMenuClose();
   };
 
@@ -57,7 +98,7 @@ export default function PrimarySearchAppBar() {
         horizontal: "right",
       }}
       open={isMenuOpen}
-      onClose={handleMenuClose}
+      onClose={clickeOut}
     >
       <MenuItem onClick={handleMenuClose}>LogOut</MenuItem>
     </Menu>
@@ -103,13 +144,30 @@ export default function PrimarySearchAppBar() {
       >
         <Toolbar sx={{ paddingLeft: 0, paddingRight: 0 }}>
           <Typography
-            variant="h6"
+            variant="h5"
             noWrap
             component="div"
-            sx={{ display: { xs: "none", sm: "block" } }}
+            sx={{
+              display: { xs: "none", sm: "block" },
+              cursor: "pointer",
+              hover: "",
+            }}
+            onClick={() => navigate("/home")}
           >
             Previsiones
           </Typography>
+          <Tabs
+            value={value}
+            onChange={(event, newValue) => handleTabChange(event, newValue)}
+            textColor="inherit"
+            indicatorColor="secondary"
+            sx={{ ml: 20 }} // small left margin
+          >
+            <Tab label={<Typography variant="body1">Home</Typography>} />
+            <Tab label={<Typography variant="body1">Veps</Typography>} />
+            <Tab label={<Typography variant="body1">Analytics</Typography>} />
+            <Tab label={<Typography variant="body1">Reports</Typography>} />
+          </Tabs>
           <Box sx={{ flexGrow: 1 }} />
           <Box sx={{ display: { xs: "none", md: "flex" } }}>
             <IconButton

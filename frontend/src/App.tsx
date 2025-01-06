@@ -8,7 +8,7 @@ import { ProtectedRoute } from "@src/components";
 import { supabase } from "@src/service/supabaseClient";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { Home, Login } from "./pages";
+import { Home, Login, Veps } from "./pages";
 import { AppStore } from "./redux/store";
 
 const App: React.FC = () => {
@@ -59,6 +59,12 @@ const App: React.FC = () => {
           path="/home"
           element={
             <ProtectedRoute element={Home} isAuthenticated={isAuthenticated} />
+          }
+        />
+        <Route
+          path="/Veps"
+          element={
+            <ProtectedRoute element={Veps} isAuthenticated={isAuthenticated} />
           }
         />
         <Route

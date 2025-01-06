@@ -1,4 +1,4 @@
-import { User } from "@src/models/user.model";
+import { User, UserVeps } from "@src/models/user.model";
 import { supabase } from "./supabaseClient";
 
 export async function getDataUsers(): Promise<User[]> {
@@ -21,4 +21,15 @@ export async function editDataUser(user: User): Promise<User> {
   }
 
   return data?.[0] ?? ({} as User);
+}
+
+export async function getDataUsersVeps(): Promise<UserVeps[]> {
+  let { data: users, error } = await supabase.from("vep_users").select("*");
+
+  if (error) {
+    console.error("Error getting users:", error);
+    return [];
+  }
+
+  return users ?? [];
 }

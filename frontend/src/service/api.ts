@@ -1,8 +1,34 @@
 const apiUrl = import.meta.env.VITE_API_URL;
+const vepAPIUrl = import.meta.env.VITE_API_LOAD_VEP;
 const afipUrl = import.meta.env.VITE_AFIP_URL;
 import { User } from "@src/models";
 import axios, { AxiosError, AxiosResponse } from "axios";
 import Cookies from "js-cookie";
+
+export const loadVep = async (pdf: string, name_pdf: string) => {
+  try {
+    const response = await axios.post(
+      `${vepAPIUrl}loadVep`,
+      {
+        pdf,
+        name_pdf,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${Cookies.get("authToken")}`,
+        },
+      },
+    );
+    return response;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      return error;
+    }
+
+    return error as AxiosError;
+  }
+};
 
 export const resetServer = async () => {
   try {
@@ -60,6 +86,7 @@ export const generatePrevisiones = async (
   data: User[],
 ): Promise<AxiosResponse<ResponsePrevisiones> | AxiosError> => {
   try {
+    console.log(apiUrl, "hola");
     const response = await axios.post(
       `${apiUrl}api/scrape/previsiones`,
       {

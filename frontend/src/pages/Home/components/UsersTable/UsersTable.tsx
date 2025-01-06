@@ -157,6 +157,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
 
     try {
       const filteredUsers = filterBySelectedRows(selectedRows);
+      console.error(filteredUsers);
       const response = await generatePrevisiones(filteredUsers);
       console.log(response);
       if (isAxiosError(response)) {
