@@ -1,6 +1,11 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { User } from "@src/models";
-import { editDataUser, getDataUsers } from "@src/service/supabase";
+import {
+  addDataUser,
+  deleteDataUser,
+  editDataUser,
+  getDataUsers,
+} from "@src/service/supabase";
 
 // Async thunk for fetching users
 export const fetchUsers = createAsyncThunk("users/fetchUsers", async () => {
@@ -11,7 +16,18 @@ export const editUser = createAsyncThunk(
   "users/editUser",
   async (user: User) => {
     return await editDataUser(user);
-  }
+  },
+);
+
+export const addUser = createAsyncThunk("users/addUser", async (user: User) => {
+  return await addDataUser(user);
+});
+
+export const deleteUser = createAsyncThunk(
+  "users/deleteUser",
+  async (user: User) => {
+    return await deleteDataUser(user);
+  },
 );
 
 const usersSlice = createSlice({

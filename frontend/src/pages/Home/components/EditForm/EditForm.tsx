@@ -19,13 +19,14 @@ interface EditFormProps {
   handleClose: () => void;
   handleEditUser: (user: User) => void;
   dataUser: User;
+  newUser?: boolean;
 }
-
 const EditForm: React.FC<EditFormProps> = ({
   open,
   handleClose,
   dataUser,
   handleEditUser,
+  newUser,
 }) => {
   const [user, setUser] = useState<User>({
     id: 0,
@@ -92,22 +93,29 @@ const EditForm: React.FC<EditFormProps> = ({
   };
 
   const handleSubmit = () => {
-    if (validate()) {
+    if (validate() && !newUser) {
       handleEditUser(user);
+      handleClose();
+    } else if (newUser && validate()) {
+      const { id, ...newUser } = user;
+      // addUser(newUser);
       handleClose();
     }
   };
 
   return (
     <Dialog open={open} aria-labelledby="form-dialog-title">
-      <DialogTitle id="form-dialog-title">Editar Persona</DialogTitle>
+      <DialogTitle id="form-dialog-title">
+        {" "}
+        {newUser ? "Crear Persona" : "Editar Persona"}
+      </DialogTitle>
       <DialogContent>
         <TextField
           autoFocus
           margin="dense"
           id="username"
           name="username"
-          label="Name"
+          label="CUIT"
           type="text"
           value={user.username}
           onChange={handleInputChange}
@@ -181,10 +189,12 @@ const EditForm: React.FC<EditFormProps> = ({
           helperText={errors.real_name}
         />
       </DialogContent>
-      <DialogActions sx= {{
-		display: 'flex',
-		justifyContent: 'center'
-	  }}> 
+      <DialogActions
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+        }}
+      >
         <Button onClick={handleClose} color="error">
           Cancelar
         </Button>
