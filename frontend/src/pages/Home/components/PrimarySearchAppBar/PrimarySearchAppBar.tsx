@@ -31,6 +31,11 @@ export default function PrimarySearchAppBar() {
     setMobileMoreAnchorEl(null);
   };
 
+  const clickeOut = () => {
+    setAnchorEl(null);
+    handleMobileMenuClose();
+  };
+
   const handleMenuClose = () => {
     setAnchorEl(null);
     dispatch(logout());
@@ -57,7 +62,7 @@ export default function PrimarySearchAppBar() {
         horizontal: "right",
       }}
       open={isMenuOpen}
-      onClose={handleMenuClose}
+      onClose={clickeOut}
     >
       <MenuItem onClick={handleMenuClose}>LogOut</MenuItem>
     </Menu>
@@ -103,10 +108,15 @@ export default function PrimarySearchAppBar() {
       >
         <Toolbar sx={{ paddingLeft: 0, paddingRight: 0 }}>
           <Typography
-            variant="h6"
+            variant="h5"
             noWrap
             component="div"
-            sx={{ display: { xs: "none", sm: "block" } }}
+            sx={{
+              display: { xs: "none", sm: "block" },
+              cursor: "pointer",
+              hover: "",
+            }}
+            onClick={() => navigate("/home")}
           >
             Previsiones
           </Typography>

@@ -22,3 +22,29 @@ export async function editDataUser(user: User): Promise<User> {
 
   return data?.[0] ?? ({} as User);
 }
+
+export async function addDataUser(user: User): Promise<User> {
+  console.log("USETRRRRRRE", user);
+  let { data, error } = await supabase.from("afip_users").insert(user);
+
+  if (error) {
+    console.error("Error adding user:", error);
+    return {} as User;
+  }
+
+  return data?.[0] ?? ({} as User);
+}
+
+export async function deleteDataUser(user: User): Promise<User> {
+  let { data, error } = await supabase
+    .from("afip_users")
+    .delete()
+    .eq("id", user.id);
+
+  if (error) {
+    console.error("Error deleting user:", error);
+    return {} as User;
+  }
+
+  return data?.[0] ?? ({} as User);
+}

@@ -9,12 +9,19 @@ import {
 } from "@mui/x-data-grid";
 import { User } from "@src/models";
 import { useDispatch, useSelector } from "react-redux";
-import { editUser, fetchUsers, modifyState } from "@src/redux/states";
+import {
+  addUser,
+  deleteUser,
+  editUser,
+  fetchUsers,
+  modifyState,
+} from "@src/redux/states";
 import { Box, Button, IconButton } from "@mui/material";
 import {
   Visibility,
   VisibilityOff,
   PlayCircleFilledOutlined,
+  Queue,
 } from "@mui/icons-material";
 import CircularProgress from "@mui/material/CircularProgress";
 import spanishLocaleText from "@src/helpers/spanish.helper";
@@ -29,6 +36,7 @@ import {
   checkJobStatus,
   generatePrevisiones,
   resetServer,
+  triggerRedeploy,
 } from "@src/service/api";
 import { isAxiosError } from "axios";
 import { CustomModal } from "../CustomModal";
@@ -39,7 +47,11 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Typography,
+  Stack,
 } from "@mui/material";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export type UsersTableProps = {};
 
@@ -49,6 +61,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
   const dispatch = useDispatch<AppDispatch>();
   const stateUsers = useSelector((store: AppStore) => store.users);
   const [open, setOpen] = useState(false);
+  const [newUserToAdd, setNewUserToAdd] = useState(false);
   const [selectedRows, setSelectedRows] = useState<GridRowId[]>([]);
   const [dataUser, setDataUser] = useState<User>({
     id: 0,
@@ -67,6 +80,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
   const [timeExpected, setTimeExpected] = useState(0);
   const [isActiveInterval, setIsActiveInterval] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
+  const [openDialogRedeploy, setOpenDialogRedeploy] = useState(false);
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -116,9 +130,19 @@ const UsersTable: React.FC<UsersTableProps> = () => {
     setFailedOpen(false);
   };
 
-  const handleEditForm = (params: User) => {
+  const handleEditForm = (params: User, newUser?: boolean) => {
+    const new_user = {
+      id: users[users.length - 1].id + 1,
+      username: "",
+      password: "",
+      is_company: false,
+      company_name: "",
+      real_name: "",
+      cuit_company: "",
+    };
     setOpen(true);
-    setDataUser(params);
+    newUser ? setNewUserToAdd(newUser) : setNewUserToAdd(false);
+    setDataUser(newUser ? new_user : params);
   };
 
   const handleEditUser = (user: User) => {
@@ -128,6 +152,17 @@ const UsersTable: React.FC<UsersTableProps> = () => {
       dispatch(modifyState(user));
     } catch (error) {
       showErrorToast("Error al editar usuario!", "top-right", 4000);
+      console.error("Error editing user:", error);
+    }
+  };
+
+  const handleCreateUser = (user: User) => {
+    try {
+      dispatch(addUser(user));
+      showSuccessToast("Usuario agregado correctamente!", "top-right", 4000);
+      dispatch(modifyState(user));
+    } catch (error) {
+      showErrorToast("Error al crear usuario!", "top-right", 4000);
       console.error("Error editing user:", error);
     }
   };
@@ -168,7 +203,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
       } else {
         console.log("NOt error");
         setJobId(response.data.jobId);
-        setTimeExpected(response.data.usersLength * 100_000);
+        setTimeExpected(response.data.usersLength * 150_000);
         setIsActiveInterval(true);
         showSuccessToast("Iniciando consulta de usuarios", "top-right", 4000);
       }
@@ -226,6 +261,26 @@ const UsersTable: React.FC<UsersTableProps> = () => {
         >
           {" "}
           Reiniciar Server...
+        </Button>
+        <Button
+          sx={{
+            pb: 1.1,
+            color: "red",
+          }}
+          onClick={() => setOpenDialogRedeploy(!openDialogRedeploy)}
+        >
+          {" "}
+          Redeploy Server...
+        </Button>
+        <Button
+          sx={{
+            pb: 1.1,
+            color: "blue",
+          }}
+          onClick={() => handleEditForm(dataUser, true)}
+        >
+          {" "}
+          <Queue fontSize="small" />
         </Button>
       </Box>
     );
@@ -322,21 +377,103 @@ const UsersTable: React.FC<UsersTableProps> = () => {
       headerName: "Acciones",
       sortable: false,
       width: 130,
+      align: "center",
+      headerAlign: "center",
       flex: 1,
       renderCell: (params) => (
-        <Button
-          onClick={(event) => {
-            event?.stopPropagation();
-            handleEditForm(params.row);
-          }}
-        >
-          Editar
-        </Button>
+        <div>
+          <Button
+            onClick={(event) => {
+              event?.stopPropagation();
+              handleEditForm(params.row);
+            }}
+          >
+            Editar
+          </Button>
+          <Button
+            sx={{
+              color: "red",
+              fontSize: "small",
+            }}
+            onClick={(event) => {
+              event?.stopPropagation();
+              showConfirmationToast(
+                () => handleDelete(params.row),
+                () => console.log("Deny"),
+              );
+            }}
+          >
+            Borrar
+          </Button>
+        </div>
       ),
       filterable: false,
       disableColumnMenu: true,
     },
+    // {
+    //   field: "delete",
+    //   headerName: "Borrado",
+    //   sortable: false,
+    //   width: 130,
+    //   flex: 1,
+    //   renderCell: (params) => (
+
+    //   ),
+    //   filterable: false,
+    //   disableColumnMenu: true,
+    // },
   ];
+
+  const showConfirmationToast = (onAccept: () => void, onDeny: () => void) => {
+    toast.info(
+      ({ closeToast }) => (
+        <div>
+          <Typography variant="subtitle1" gutterBottom>
+            ¿Estás seguro de borrar este usuario?
+          </Typography>
+          <Stack direction="row" spacing={2}>
+            <Button
+              variant="contained"
+              color="error"
+              size="small"
+              onClick={() => {
+                onAccept();
+                closeToast?.();
+              }}
+            >
+              Aceptar
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => {
+                onDeny();
+                closeToast?.();
+              }}
+            >
+              Cancelar
+            </Button>
+          </Stack>
+        </div>
+      ),
+      {
+        autoClose: false,
+        closeOnClick: false,
+        closeButton: false,
+      },
+    );
+  };
+
+  const handleDelete = (user: User) => {
+    try {
+      dispatch(deleteUser(user));
+      showSuccessToast("Usuario borrado correctamente!", "top-right", 4000);
+      dispatch(modifyState(user));
+    } catch (error) {
+      showErrorToast("Error al borrar usuario!", "top-right", 4000);
+      console.error("Error editing user:", error);
+    }
+  };
 
   const handleSelectionChange = (newSelection: GridRowSelectionModel) => {
     setSelectedRows([...newSelection]);
@@ -350,19 +487,38 @@ const UsersTable: React.FC<UsersTableProps> = () => {
   }, [stateUsers]);
 
   const handleAccept = async () => {
-    console.log("Accepted!");
-    await resetServer();
-    setOpenDialog(false);
-    showInfoToast(
-      "Reiniciando servidor, espere un momento...",
-      "top-right",
-      4000,
-    );
+    if (openDialogRedeploy) {
+      const response = await triggerRedeploy();
+      setOpenDialogRedeploy(false);
+      showInfoToast(
+        "Haciendo redeploy del servidor, espere 3 minutos...",
+        "top-right",
+        2000,
+      );
+      if (response.error) {
+        showErrorToast("Error en la redeploy del servidor", "top-right", 5000);
+      } else {
+        showSuccessToast(
+          "Redeploy del servidor realizado correctamente, espere 3 minutos...",
+          "top-right",
+          120000,
+        );
+      }
+    } else if (openDialog) {
+      await resetServer();
+      setOpenDialog(false);
+      showInfoToast(
+        "Reiniciando servidor, espere un momento...",
+        "top-right",
+        4000,
+      );
+    }
   };
 
   const handleCancel = () => {
     console.log("Cancelled!");
     setOpenDialog(false);
+    setOpenDialogRedeploy(false);
   };
 
   return (
@@ -405,7 +561,8 @@ const UsersTable: React.FC<UsersTableProps> = () => {
         open={open}
         handleClose={handleClose}
         dataUser={dataUser}
-        handleEditUser={handleEditUser}
+        handleEditUser={newUserToAdd ? handleCreateUser : handleEditUser}
+        newUser={newUserToAdd}
       />
       <CustomModal
         open={failedOpen}
@@ -425,6 +582,29 @@ const UsersTable: React.FC<UsersTableProps> = () => {
           <DialogContent>
             <DialogContentText id="alert-dialog-description">
               Seguro que quieres reiniciar el servidor?
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCancel} color="primary">
+              No
+            </Button>
+            <Button onClick={handleAccept} color="error" autoFocus>
+              Sí
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </div>
+      <div>
+        <Dialog
+          open={openDialogRedeploy}
+          onClose={handleCancel}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+        >
+          <DialogTitle id="alert-dialog-title">{"Confirm Action"}</DialogTitle>
+          <DialogContent>
+            <DialogContentText id="alert-dialog-description">
+              Seguro que queres hacer un redeploy del servidor?
             </DialogContentText>
           </DialogContent>
           <DialogActions>

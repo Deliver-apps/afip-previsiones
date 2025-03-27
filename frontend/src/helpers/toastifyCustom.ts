@@ -6,7 +6,7 @@ type ToastPosition = "top-right" | "top-left" | "bottom-right" | "bottom-left";
 export const showErrorToast = (
   message: string,
   position: ToastPosition,
-  time: number
+  time: number,
 ) => {
   toast.error(message, {
     position,
@@ -23,7 +23,7 @@ export const showErrorToast = (
 export const showSuccessToast = (
   message: string,
   position: ToastPosition,
-  time: number
+  time: number,
 ) => {
   toast.success(message, {
     position,
@@ -40,7 +40,7 @@ export const showSuccessToast = (
 export const showInfoToast = (
   message: string,
   position: ToastPosition,
-  time: number
+  time: number,
 ) => {
   toast.info(message, {
     position,
@@ -57,7 +57,7 @@ export const showInfoToast = (
 export const showWarningToast = (
   message: string,
   position: ToastPosition,
-  time: number
+  time: number,
 ) => {
   toast.warning(message, {
     position,
@@ -74,7 +74,7 @@ export const showWarningToast = (
 export const showDefaultToast = (
   message: string,
   position: ToastPosition,
-  time: number
+  time: number,
 ) => {
   toast(message, {
     position,
