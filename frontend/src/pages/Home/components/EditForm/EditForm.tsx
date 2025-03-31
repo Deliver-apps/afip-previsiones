@@ -13,11 +13,12 @@ import {
   TextField,
 } from "@mui/material";
 import { User } from "@src/models";
+import { addDataUser } from "@src/service/supabase";
 
 interface EditFormProps {
   open: boolean;
   handleClose: () => void;
-  handleEditUser: (user: User) => void;
+  handleEditUser: (user: Partial<User>) => void;
   dataUser: User;
   newUser?: boolean;
 }
@@ -98,7 +99,7 @@ const EditForm: React.FC<EditFormProps> = ({
       handleClose();
     } else if (newUser && validate()) {
       const { id, ...newUser } = user;
-      // addUser(newUser);
+      handleEditUser(newUser);
       handleClose();
     }
   };

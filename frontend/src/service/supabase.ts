@@ -23,7 +23,7 @@ export async function editDataUser(user: User): Promise<User> {
   return data?.[0] ?? ({} as User);
 }
 
-export async function addDataUser(user: User): Promise<User> {
+export async function addDataUser(user: Partial<User>): Promise<User> {
   console.log("USETRRRRRRE", user);
   let { data, error } = await supabase.from("afip_users").insert(user);
 

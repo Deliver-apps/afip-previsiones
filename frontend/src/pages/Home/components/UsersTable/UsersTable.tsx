@@ -158,8 +158,10 @@ const UsersTable: React.FC<UsersTableProps> = () => {
 
   const handleCreateUser = (user: User) => {
     try {
-      dispatch(addUser(user));
-      showSuccessToast("Usuario agregado correctamente!", "top-right", 4000);
+      console.log("PREVIOOOOOOOO");
+      dispatch(addUser(user)).then(() =>
+        showSuccessToast("Usuario agregado correctamente!", "top-right", 4000),
+      );
       dispatch(modifyState(user));
     } catch (error) {
       showErrorToast("Error al crear usuario!", "top-right", 4000);
@@ -290,7 +292,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
     {
       field: "id",
       headerName: "id",
-      width: 100,
+      width: 40,
       flex: 1,
       filterable: false,
       disableColumnMenu: true,
@@ -299,7 +301,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
     {
       field: "username",
       headerName: "CUIT",
-      width: 130,
+      width: 120,
       flex: 1,
       sortable: false,
       disableColumnMenu: true,
