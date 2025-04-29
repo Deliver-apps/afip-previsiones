@@ -41,12 +41,14 @@ router.post("/previsiones", async (req, res) => {
         const result = await individualScraperWithTimeout(campos);
 
         if (result.error) {
+          logger.verbose("RESULT ERROR");
+          logger.verbose(result.error);
           throw new Error(result.error);
         }
         helper.push(result);
       } catch (error) {
-        logger.error(error.message);
-        responseFailed.push(campos);
+        logger.verbose(error.message);
+        responseFailed.push({ ...campos, link: error.link ?? error.message });
         if (responseFailed.length > 55) {
           throw new Error(
             "Fallaron muchas solicitudes, se cancela la generación",

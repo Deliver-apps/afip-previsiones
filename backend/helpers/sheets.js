@@ -144,12 +144,13 @@ const putSheetData = async (data, errors = []) => {
   });
 
   const errorVerticalValues = errors.map((error) => {
-    const { username, real_name, is_company, company_name } = error;
+    const { username, real_name, is_company, company_name, link } = error;
     const nameToShow = is_company ? company_name : real_name;
     return [
       ["Razón Social", nameToShow],
       ["CUIT", username],
       ["Error", "Error Prevision"],
+      ["Link", link],
     ];
   });
 
@@ -187,7 +188,7 @@ const putSheetData = async (data, errors = []) => {
   // Combine the header and the transposed data
   const finalHorizontalValues = [horizontalValues, ...transposedData];
 
-  await sheets.spreadsheets.values.update({
+  sheets.spreadsheets.values.update({
     auth: client,
     spreadsheetId,
     range: `${formattedTime}!A1`, // Start writing the horizontal table at A1
@@ -196,19 +197,28 @@ const putSheetData = async (data, errors = []) => {
       values: finalHorizontalValues,
     },
   });
-
-  await sheets.spreadsheets.values.update({
+  sheets.spreadsheets.values.update({
     auth: client,
     spreadsheetId,
-    range: `${formattedTime}!A${data.length + 3}`, // Adjust range to where the data should be inserted
+    range: `${formattedTime}!A${data.length + 5}`, // Adjust the starting position as needed
+    valueInputOption: "USER_ENTERED",
+    resource: {
+      values: flattenedTransposedValues,
+    },
+  });
+
+  const startRow = data.length + 18;
+  const endRow = startRow + flatenErrorVerticalValues.length * 2;
+
+  sheets.spreadsheets.values.update({
+    auth: client,
+    spreadsheetId,
+    range: `${formattedTime}!A${startRow}`, // Adjust range to where the data should be inserted
     valueInputOption: "USER_ENTERED",
     resource: {
       values: flatenErrorVerticalValues,
     },
   });
-
-  const startRow = data.length + 2;
-  const endRow = startRow + flatenErrorVerticalValues.length * 2;
 
   await sheets.spreadsheets.batchUpdate({
     auth: client,
@@ -219,7 +229,7 @@ const putSheetData = async (data, errors = []) => {
           repeatCell: {
             range: {
               sheetId: sheetId, // Ensure this is the correct sheetId
-              startRowIndex: startRow, // The row where errors start
+              startRowIndex: startRow - 1, // The row where errors start
               endRowIndex: endRow, // End row (exclusive)
               startColumnIndex: 0, // Starting column (0 = column A)
               endColumnIndex: 2, // Adjust for the number of columns you're writing data into
@@ -239,16 +249,6 @@ const putSheetData = async (data, errors = []) => {
           },
         },
       ],
-    },
-  });
-
-  sheets.spreadsheets.values.update({
-    auth: client,
-    spreadsheetId,
-    range: `${formattedTime}!A${data.length + errors.length + 8}`, // Adjust the starting position as needed
-    valueInputOption: "USER_ENTERED",
-    resource: {
-      values: flattenedTransposedValues,
     },
   });
 };

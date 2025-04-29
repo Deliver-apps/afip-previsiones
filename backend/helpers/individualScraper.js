@@ -22,6 +22,13 @@ const uploadToSpaces = async (buffer, fileName) => {
   return await s3ClientPrevisiones.send(new PutObjectCommand(params));
 };
 
+const getImageFromFileName = (fileName) => {
+  const fileNameSplit = fileName.split("-");
+  const date = fileNameSplit[0];
+  const time = fileNameSplit[1];
+  return `https://previsiones-afip.s3.amazonaws.com/screenshots/${date}-${time}.png`;
+};
+
 const individualScraper = async ({
   username,
   password,
@@ -145,7 +152,10 @@ const individualScraper = async ({
 
     await handleRetry(error, newPage2 || newPage || page);
 
-    return { error: error.message };
+    return {
+      error: error.message,
+      link: `https://previsiones-afip.nyc3.cdn.digitaloceanspaces.com/${fileName}`,
+    };
   }
 };
 
@@ -579,7 +589,8 @@ const retryWithDelay = async (page, selector, delay) => {
     const screenshotBuffer = await page.screenshot({ encoding: "binary" });
     const fileName = `screenshots/screenshot-${Date.now()}.png`;
     await uploadToSpaces(screenshotBuffer, fileName);
-    throw new Error("Retry failed: " + error.message);
+    const url = `https://previsiones-afip.nyc3.cdn.digitaloceanspaces.com/${fileName}`;
+    throw new Error(url);
   }
 };
 
