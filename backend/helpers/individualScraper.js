@@ -415,7 +415,9 @@ const navigateToPortalIVA = async (page) => {
     const screenshotBuffer = await page.screenshot({ encoding: "binary" });
     const fileName = `screenshots/screenshot-${Date.now()}.png`;
     await uploadToSpaces(screenshotBuffer, fileName);
-    throw new Error("Failed to navigate to Portal IVA: " + error.message);
+    const url = `https://previsiones-afip.nyc3.cdn.digitaloceanspaces.com/${fileName}`;
+    logger.verbose("Failed to navigate to Portal IVA: " + error.message);
+    throw new Error(url);
   }
 };
 
@@ -474,7 +476,9 @@ const switchCompanyContext = async (page, cuitCompany) => {
     const screenshotBuffer = await page.screenshot({ encoding: "binary" });
     const fileName = `screenshots/screenshot-${Date.now()}.png`;
     await uploadToSpaces(screenshotBuffer, fileName);
-    throw new Error("Failed to switch company context: " + error.message);
+    const url = `https://previsiones-afip.nyc3.cdn.digitaloceanspaces.com/${fileName}`;
+    this.logger.verbose("Failed to switch company context: " + error.message);
+    throw new Error(url);
   }
 };
 
@@ -515,7 +519,9 @@ const checkAndValidatePeriod = async (page) => {
     const screenshotBuffer = await page.screenshot({ encoding: "binary" });
     const fileName = `screenshots/screenshot-${Date.now()}.png`;
     await uploadToSpaces(screenshotBuffer, fileName);
-    throw new Error("Failed to validate period: " + error.message);
+    const url = `https://previsiones-afip.nyc3.cdn.digitaloceanspaces.com/${fileName}`;
+    logger.verbose("Failed to validate period: " + error.message);
+    throw new Error(url);
   }
 };
 
