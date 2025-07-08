@@ -34,42 +34,55 @@ const calculateResult = (campos) => {
 };
 
 const formatMoneyFields = (campos) => {
+  console.log(JSON.stringify(campos, null, 2));
   return {
     ventasNeto: moneyFormat(
       stringToNumber(campos.ventas.operaciones.neto) -
-        stringToNumber(campos.ventas.notasDeCredito.neto),
+      stringToNumber(campos.ventas.notasDeCredito.neto) +
+      campos.ventas.venta,
     ),
     ventasIVA: moneyFormat(
       stringToNumber(campos.ventas.operaciones.debito) -
-        stringToNumber(campos.ventas.notasDeCredito.debito),
+      stringToNumber(campos.ventas.notasDeCredito.debito) +
+      campos.ventas.iva,
+    ),
+    ventasNoGeneranCredito: moneyFormat(
+      stringToNumber(campos.ventas.notasDeCredito.noGeneranCredito) -
+      stringToNumber(campos.ventas.notasDeCredito.exento) +
+      stringToNumber(campos.ventas.notasDeCredito.neto),
     ),
     ventasTotal: moneyFormat(
       stringToNumber(campos.ventas.operaciones.neto) -
-        stringToNumber(campos.ventas.notasDeCredito.neto) +
-        stringToNumber(campos.ventas.operaciones.debito) -
-        stringToNumber(campos.ventas.notasDeCredito.debito),
+      stringToNumber(campos.ventas.notasDeCredito.neto) +
+      stringToNumber(campos.ventas.operaciones.debito) -
+      stringToNumber(campos.ventas.notasDeCredito.debito) +
+      stringToNumber(campos.ventas.notasDeCredito.noGeneranCredito) -
+      stringToNumber(campos.ventas.notasDeCredito.exento) +
+      stringToNumber(campos.ventas.notasDeCredito.neto) +
+      campos.ventas.ventaAndIva,
     ),
     comprasNeto: moneyFormat(
       stringToNumber(campos.compras.operaciones.neto) -
-        stringToNumber(campos.compras.notasDeCredito.neto),
+      stringToNumber(campos.compras.notasDeCredito.neto),
     ),
     comprasIVA: moneyFormat(
       stringToNumber(campos.compras.operaciones.debito) -
-        stringToNumber(campos.compras.notasDeCredito.debito),
+      stringToNumber(campos.compras.notasDeCredito.debito),
     ),
     comprasTotal: moneyFormat(
       stringToNumber(campos.compras.operaciones.neto) -
-        stringToNumber(campos.compras.notasDeCredito.neto) +
-        stringToNumber(campos.compras.operaciones.debito) -
-        stringToNumber(campos.compras.notasDeCredito.debito),
+      stringToNumber(campos.compras.notasDeCredito.neto) +
+      stringToNumber(campos.compras.operaciones.debito) -
+      stringToNumber(campos.compras.notasDeCredito.debito) +
+      stringToNumber(campos.compras.notasDeCredito.noGeneranCredito) -
+      stringToNumber(campos.compras.notasDeCredito.exento) +
+      stringToNumber(campos.compras.operaciones.exento)
+    ),
+    comprasNoGeneranCredito: moneyFormat(
+      stringToNumber(campos.compras.operaciones.exento) +
+      stringToNumber(campos.compras.notasDeCredito.noGeneranCredito),
     ),
   };
-};
-
-const transposeData = (data) => {
-  return data[0].map(
-    (_, colIndex) => data.map((row) => row[colIndex][1]), // Extract only the values, ignoring the keys
-  );
 };
 
 const putSheetData = async (data, errors = []) => {
@@ -78,7 +91,17 @@ const putSheetData = async (data, errors = []) => {
   if (!data || data.length === 0) {
     return;
   }
-  const credentials = JSON.parse(config.secretClient);
+  let credentials;
+  try {
+    if (!config.secretClient) {
+      throw new Error('SECRET_CLIENT no está definido en las variables de entorno');
+    }
+    credentials = JSON.parse(config.secretClient);
+  } catch (err) {
+    logger.error('Error parseando config.secretClient:', err.message);
+    logger.error('Valor de SECRET_CLIENT:', config.secretClient ? config.secretClient.substring(0, 100) + '...' : 'undefined');
+    throw new Error(`Error parseando SECRET_CLIENT: ${err.message}`);
+  }
   const auth = new google.auth.GoogleAuth({
     credentials,
     scopes: ["https://www.googleapis.com/auth/spreadsheets"],
@@ -135,10 +158,12 @@ const putSheetData = async (data, errors = []) => {
       ["CUIT", campos.cuit],
       ["Ventas Neto", formattedMoneyFields.ventasNeto],
       ["Ventas IVA", formattedMoneyFields.ventasIVA],
+      ["Ventas Que No Generan Credito fiscal", formattedMoneyFields.ventasNoGeneranCredito],
       ["Ventas Total", formattedMoneyFields.ventasTotal],
       ["Compras Neto", formattedMoneyFields.comprasNeto],
       ["Compras IVA", formattedMoneyFields.comprasIVA],
       ["Compras Total", formattedMoneyFields.comprasTotal],
+      ["Compras Que No Generan Credito fiscal", formattedMoneyFields.comprasNoGeneranCredito],
       [estado, moneyFormat(result)],
     ];
   });
@@ -171,10 +196,12 @@ const putSheetData = async (data, errors = []) => {
     "CUIT",
     "Ventas Neto",
     "Ventas IVA",
+    "Ventas Que No Generan Credito fiscal",
     "Ventas Total",
     "Compras Neto",
     "Compras IVA",
     "Compras Total",
+    "Compras Que No Generan Credito fiscal",
     "Estado", // Column name
     "Monto",
   ];
@@ -182,7 +209,7 @@ const putSheetData = async (data, errors = []) => {
   // Transpose the data to get the horizontal rows
   const transposedData = allVerticalValues.map((row) => {
     const rowData = row.map((col) => col[1]); // Extract the values
-    rowData.splice(8, 0, row[8][0]); // Insert "A Pagar" or "A Favor" as the value for "Estado"
+    rowData.splice(10, 0, row[10][0]); // Insert "A Pagar" or "A Favor" as the value for "Estado"
     return rowData;
   });
   // Combine the header and the transposed data

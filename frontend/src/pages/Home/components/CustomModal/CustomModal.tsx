@@ -36,7 +36,7 @@ const CustomModal: React.FC<CustomModalProps> = ({
           borderRadius: 1,
         }}
       >
-        <Typography id="modal-title" variant="h6" component="h2">
+        <Typography id="modal-title" variant="subtitle1" component="h2">
           {title}
         </Typography>
         <Typography id="modal-description" sx={{ mt: 2 }}>

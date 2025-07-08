@@ -7,7 +7,22 @@ const { addJobToQueue, updateJob, getJobById } = require("../helpers/cache");
 
 const router = express.Router();
 
-const individualScraperWithTimeout = async (campos, timeout = 400_000) => {
+const { validateScraperInput, validateExtractedData, formatDataForLogging } = require("../helpers/validation");
+const config = require("../config/config");
+
+const individualScraperWithTimeout = async (campos, timeout = config.scraper.timeout) => {
+  // Validar datos de entrada
+  const validation = validateScraperInput(campos);
+  if (!validation.isValid) {
+    throw new Error(`Invalid input data: ${validation.errors.join(", ")}`);
+  }
+
+  if (validation.warnings.length > 0) {
+    logger.warn(`Warnings for ${campos.username || campos.cuit_company}: ${validation.warnings.join(", ")}`);
+  }
+
+  console.table(formatDataForLogging(campos));
+  
   return Promise.race([
     individualScraper(campos),
     new Promise((_, reject) =>
@@ -15,7 +30,7 @@ const individualScraperWithTimeout = async (campos, timeout = 400_000) => {
         () =>
           reject(
             new Error(
-              "Timeout: la solicitud no se completó en el tiempo permitido",
+              `Timeout: la solicitud no se completó en ${timeout/1000} segundos`,
             ),
           ),
         timeout,
@@ -27,42 +42,88 @@ const individualScraperWithTimeout = async (campos, timeout = 400_000) => {
 router.post("/previsiones", async (req, res) => {
   console.log("Starting scraping...");
   const { data } = req.body;
+  
+  // Validar que data sea un array
+  if (!Array.isArray(data) || data.length === 0) {
+    return res.status(400).json({ 
+      success: false, 
+      error: "Data must be a non-empty array" 
+    });
+  }
+
   const helper = [];
   const responseFailed = [];
+  let jobId;
+  
   try {
-    const jobId = addJobToQueue();
+    jobId = addJobToQueue();
     res.status(200).send({
       success: true,
       jobId,
       usersLength: data.length,
     });
-    for (const campos of data) {
+    
+    logger.info(`Starting batch processing for ${data.length} users`);
+    
+    for (let i = 0; i < data.length; i++) {
+      const campos = data[i];
+      const userIdentifier = campos.cuit_company || campos.username;
+      
+      logger.info(`Processing user ${i + 1}/${data.length}: ${userIdentifier}`);
+      
       try {
         const result = await individualScraperWithTimeout(campos);
 
         if (result.error) {
-          logger.verbose("RESULT ERROR");
-          logger.verbose(result.error);
+          logger.error(`Error for ${userIdentifier}: ${result.error}`);
           throw new Error(result.error);
         }
+        
+        // Validar datos extraídos
+        const dataValidation = validateExtractedData(result);
+        if (!dataValidation.isValid) {
+          logger.warn(`Data validation failed for ${userIdentifier}: ${dataValidation.errors.join(", ")}`);
+        }
+        
         helper.push(result);
+        logger.info(`Successfully processed ${userIdentifier}`);
+        
       } catch (error) {
-        logger.verbose(error.message);
-        responseFailed.push({ ...campos, link: error.link ?? error.message });
+        logger.error(`Failed to process ${userIdentifier}: ${error.message}`);
+        responseFailed.push({ 
+          ...campos, 
+          link: error.link ?? error.message,
+          error: error.message,
+          userIdentifier 
+        });
+        
+        // Limitar el número de fallos antes de cancelar
         if (responseFailed.length > 55) {
           throw new Error(
-            "Fallaron muchas solicitudes, se cancela la generación",
+            `Too many failures (${responseFailed.length}), cancelling generation`,
           );
         }
       }
     }
+    
+    logger.info(`Batch processing completed. Success: ${helper.length}, Failed: ${responseFailed.length}`);
     await putSheetData(helper, responseFailed);
     updateJob(jobId, "finished");
-    return;
+    
   } catch (error) {
     console.error(error);
-    logger.error(error.message);
-    res.status(500).json({ success: false, error: error.message });
+    logger.error(`Batch processing failed: ${error.message}`);
+    
+    if (jobId) {
+      updateJob(jobId, "failed");
+    }
+    
+    res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      processed: helper.length,
+      failed: responseFailed.length 
+    });
   }
 });
 

@@ -36,12 +36,20 @@ const individualScraper = async ({
   company_name: companyName,
   cuit_company: cuitCompany,
   real_name: realName,
+  iva: iva = "",
+  venta: venta = "",
   retry,
 }) => {
   let browser;
   let page;
   let newPage;
   let newPage2;
+  
+  const startTime = Date.now();
+  const userIdentifier = isCompany ? cuitCompany : username;
+  
+  logger.info(`Starting scraper for user: ${userIdentifier} (${realName || companyName})`);
+  
   try {
     console.log("Launching browser...");
     browser = await puppeteer.launch({
@@ -54,26 +62,48 @@ const individualScraper = async ({
         "--disable-setuid-sandbox",
         "--single-process",
         "--no-zygote",
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
+        "--no-first-run",
+        "--no-zygote",
+        "--disable-extensions",
+        "--disable-background-timer-throttling",
+        "--disable-backgrounding-occluded-windows",
+        "--disable-renderer-backgrounding",
       ],
     });
   } catch (error) {
+    logger.error(`Failed to launch browser for ${userIdentifier}: ${error.message}`);
     throw new Error("Failed to launch browser: " + error.message);
   }
 
   page = await browser.newPage();
+  
+  // Configurar timeouts y user agent
+  await page.setDefaultTimeout(30000);
+  await page.setDefaultNavigationTimeout(30000);
+  await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+  
   const url = "https://www.afip.gob.ar/landing/default.asp";
 
   const closeBrowser = async () => {
     if (browser) {
-      await browser.close();
+      try {
+        await browser.close();
+        logger.debug(`Browser closed for ${userIdentifier}`);
+      } catch (error) {
+        logger.warn(`Error closing browser for ${userIdentifier}: ${error.message}`);
+      }
     }
   };
 
   const handleRetry = async (error, paget) => {
-    console.error("An error occurred:", error.message);
+    const executionTime = Date.now() - startTime;
+    logger.error(`Error for ${userIdentifier} after ${executionTime}ms: ${error.message}`);
+    
     if (!retry) {
       await closeBrowser();
-      logger.debug("Retrying with fixed data...");
+      logger.info(`Retrying ${userIdentifier} with fixed data...`);
       const fixData = {
         username,
         password,
@@ -82,12 +112,15 @@ const individualScraper = async ({
         cuit_company: cuitCompany,
         real_name: realName,
         retry: true,
+        iva: iva,
+        venta: venta,
       };
       return individualScraper(fixData);
     }
+    
     await paget.waitForFunction(() => document.readyState === "complete");
     const screenshotBuffer = await paget.screenshot({ encoding: "binary" });
-    const fileName = `screenshots/screenshot-${Date.now()}.png`;
+    const fileName = `screenshots/screenshot-${Date.now()}-${userIdentifier}.png`;
     await uploadToSpaces(screenshotBuffer, fileName);
     await closeBrowser();
     throw error;
@@ -136,25 +169,38 @@ const individualScraper = async ({
       isCompany,
       companyName,
       realName,
+      iva,
+      venta,
     );
 
     // Close the browser and return the extracted data
     await closeBrowser();
     return campos;
   } catch (error) {
-    logger.error("An error occurred:", error.message);
+    const executionTime = Date.now() - startTime;
+    logger.error(`Final error for ${userIdentifier} after ${executionTime}ms: ${error.message}`);
+    
     const seletedPage = newPage2 || newPage || page;
-    const screenshotBuffer = await seletedPage.screenshot({
-      encoding: "binary",
-    });
-    const fileName = `screenshots/screenshot-${Date.now()}.png`;
-    await uploadToSpaces(screenshotBuffer, fileName);
+    let screenshotUrl = null;
+    
+    try {
+      const screenshotBuffer = await seletedPage.screenshot({
+        encoding: "binary",
+      });
+      const fileName = `screenshots/screenshot-${Date.now()}-${userIdentifier}.png`;
+      await uploadToSpaces(screenshotBuffer, fileName);
+      screenshotUrl = `https://previsiones-afip.nyc3.cdn.digitaloceanspaces.com/${fileName}`;
+    } catch (screenshotError) {
+      logger.error(`Failed to take screenshot for ${userIdentifier}: ${screenshotError.message}`);
+    }
 
     await handleRetry(error, newPage2 || newPage || page);
 
     return {
       error: error.message,
-      link: `https://previsiones-afip.nyc3.cdn.digitaloceanspaces.com/${fileName}`,
+      link: screenshotUrl,
+      userIdentifier,
+      executionTime,
     };
   }
 };
@@ -162,13 +208,19 @@ const individualScraper = async ({
 const goToData = async (page) => {
   logger.info("Going to data...");
   await page.waitForFunction(() => document.readyState === "complete");
+  
+  // Scroll más suave y verificable
   await page.evaluate(() => {
-    window.scrollTo(0, 2_000);
+    window.scrollTo({ top: 2000, behavior: 'smooth' });
   });
   await new Promise((resolve) => setTimeout(resolve, 2_000));
-  await page.waitForSelector("#btnVistaPrevia");
+  
+  // Verificar que el botón existe antes de hacer click
+  await page.waitForSelector("#btnVistaPrevia", { timeout: 10000 });
   await page.click("#btnVistaPrevia");
-  await page.waitForSelector("#importeDJV1");
+  
+  // Esperar a que los datos se carguen
+  await page.waitForSelector("#importeDJV1", { timeout: 15000 });
   await page.waitForFunction(() => document.readyState === "complete");
   await new Promise((resolve) => setTimeout(resolve, 3_000));
 };
@@ -477,7 +529,7 @@ const switchCompanyContext = async (page, cuitCompany) => {
     const fileName = `screenshots/screenshot-${Date.now()}.png`;
     await uploadToSpaces(screenshotBuffer, fileName);
     const url = `https://previsiones-afip.nyc3.cdn.digitaloceanspaces.com/${fileName}`;
-    this.logger.verbose("Failed to switch company context: " + error.message);
+    logger.verbose("Failed to switch company context: " + error.message);
     throw new Error(url);
   }
 };
@@ -525,6 +577,9 @@ const checkAndValidatePeriod = async (page) => {
   }
 };
 
+
+
+
 const extractData = async (
   page,
   cuitCompany,
@@ -532,22 +587,78 @@ const extractData = async (
   isCompany,
   companyName,
   realName,
+  iva,
+  venta,
 ) => {
+  const userIdentifier = isCompany ? cuitCompany : username;
+  
   try {
-    logger.info(`Extracting data...${realName}`);
+    logger.info(`Extracting data for ${userIdentifier} (${realName || companyName})`);
     await page.waitForFunction(() => document.readyState === "complete");
     await new Promise((resolve) => setTimeout(resolve, 2_000));
-    logger.debug("Waiting for selector...");
+    logger.debug(`Waiting for selector #importeDJV1 for ${userIdentifier}...`);
+    
+    // Verificar que los datos de entrada son válidos
+    if (!iva || !venta) {
+      logger.warn(`Missing iva or venta data for ${userIdentifier}. IVA: ${iva}, Venta: ${venta}`);
+    }
+    
     await page.waitForSelector("#importeDJV1", {
       timeout: 15_000,
     });
 
-    const extractedData = await page.evaluate(() => {
+    const extractedData = await page.evaluate((ivaValue, ventaValue) => {
+      const calculateNeto = (total, iva) => {
+        let divisor;
+        switch (iva) {
+          case "10.5":
+            divisor = 1 + 10.5 / 100;
+            break;
+          case "21":
+            divisor = 1 + 21 / 100;
+            break;
+          case "27":
+            divisor = 1 + 27 / 100;
+            break;
+          case "0":
+            divisor = 1;
+            break;
+          default:
+            return total;
+        }
+        return total / divisor;
+      };
+
+      const calculateIvaNeto = (total, iva) => {
+        let totalResult;
+        switch (iva) {
+          case "10.5":
+            totalResult = total * (10.5 / 100);
+            break;
+          case "21":
+            totalResult = total * (21 / 100);
+            break;
+          case "27":
+            totalResult = total * (27 / 100);
+            break;
+          case "0":
+            totalResult = 0;
+            break;
+          default:
+            return 0;
+        }
+        return totalResult;
+      };
+
       const extractValues = (prefix) => {
         const getTextContent = (id) => {
           const element = document.querySelector(`#${id}`);
           return element ? element.textContent.trim() : null;
         };
+        const ventaNumber = ventaValue && ventaValue.length > 0 ? Number(ventaValue) : 0;
+
+        const venta = calculateNeto(ventaNumber, ivaValue);
+        const iva = calculateIvaNeto(venta, ivaValue);
 
         return {
           operaciones: {
@@ -559,7 +670,11 @@ const extractData = async (
             neto: getTextContent(`${prefix}4`),
             exento: getTextContent(`${prefix}5`),
             debito: getTextContent(`${prefix}6`),
+            noGeneranCredito: getTextContent(`${prefix}7`),
           },
+          iva,
+          venta,
+          ventaAndIva: ventaNumber,
         };
       };
 
@@ -567,7 +682,7 @@ const extractData = async (
       const compras = extractValues("importeDJC");
 
       return { ventas, compras };
-    });
+    }, iva, venta);
 
     return {
       ventas: extractedData.ventas,
