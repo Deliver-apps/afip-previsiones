@@ -25,7 +25,7 @@ export async function editDataUser(user: User): Promise<User> {
 
 export async function addDataUser(user: Partial<User>): Promise<User> {
   console.log("USETRRRRRRE", user);
-  let { data, error } = await supabase.from("afip_users").insert(user);
+  let { data, error } = await supabase.from("afip_users").insert(user).select();
 
   if (error) {
     console.error("Error adding user:", error);
@@ -36,15 +36,29 @@ export async function addDataUser(user: Partial<User>): Promise<User> {
 }
 
 export async function deleteDataUser(user: User): Promise<User> {
-  let { data, error } = await supabase
+  // Primero obtenemos el usuario que vamos a eliminar
+  let { data: userData, error: selectError } = await supabase
+    .from("afip_users")
+    .select("*")
+    .eq("id", user.id)
+    .single();
+
+  if (selectError) {
+    console.error("Error getting user before delete:", selectError);
+    return {} as User;
+  }
+
+  // Luego lo eliminamos
+  let { error: deleteError } = await supabase
     .from("afip_users")
     .delete()
     .eq("id", user.id);
 
-  if (error) {
-    console.error("Error deleting user:", error);
+  if (deleteError) {
+    console.error("Error deleting user:", deleteError);
     return {} as User;
   }
 
-  return data?.[0] ?? ({} as User);
+  // Retornamos los datos del usuario que acabamos de eliminar
+  return userData ?? ({} as User);
 }

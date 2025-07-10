@@ -98,7 +98,7 @@ const EditForm: React.FC<EditFormProps> = ({
     if (!user.password) {
       newErrors.password = "La contraseña es obligatoria";
     }
-    if (!user.real_name) {
+    if (!user.real_name && !isCompany) {
       newErrors.real_name = "El nombre de la persona física es obligatorio";
     }
     if (isCompany) {

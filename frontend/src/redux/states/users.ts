@@ -66,9 +66,39 @@ const usersSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    builder.addCase(fetchUsers.fulfilled, (state, action) => {
-      return action.payload;
-    });
+    builder
+      .addCase(fetchUsers.fulfilled, (state, action) => {
+        return action.payload;
+      })
+      .addCase(addUser.fulfilled, (state, action) => {
+        console.log("Usuario agregado:", action.payload);
+        // Verificar si el usuario ya existe
+        const existingUserIndex = state.findIndex(
+          (user) => user.id === action.payload.id,
+        );
+        if (existingUserIndex !== -1) {
+          // Si el usuario ya existe, actualizarlo
+          state[existingUserIndex] = action.payload;
+          return state;
+        }
+        // Si el usuario no existe, agregarlo al estado
+        console.log("Agregando nuevo usuario:", action.payload);
+        // Verificar si el usuario ya existe por username
+        // Agregar el nuevo usuario al final del estado
+        state.push(action.payload);
+      })
+      .addCase(editUser.fulfilled, (state, action) => {
+        // Actualizar el usuario editado en el estado
+        const userIndex = state.findIndex((user) => user.id === action.payload.id);
+        if (userIndex !== -1) {
+          state[userIndex] = action.payload;
+        }
+      })
+      .addCase(deleteUser.fulfilled, (state, action) => {
+        console.log("Usuario borrado:", action.payload);
+        // Remover el usuario del estado
+        return state.filter((user) => user.id !== action.payload.id);
+      });
   },
 });
 

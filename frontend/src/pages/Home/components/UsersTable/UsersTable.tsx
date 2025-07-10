@@ -382,7 +382,8 @@ const UsersTable: React.FC<UsersTableProps> = () => {
     try {
       dispatch(editUser(user));
       showSuccessToast("Usuario editado correctamente!", "top-right", 4000);
-      dispatch(modifyState(user));
+      // Remover esta línea ya que el estado se actualiza automáticamente
+       dispatch(modifyState(user));
     } catch (error) {
       showErrorToast("Error al editar usuario!", "top-right", 4000);
       console.error("Error editing user:", error);
@@ -391,9 +392,11 @@ const UsersTable: React.FC<UsersTableProps> = () => {
 
   const handleCreateUser = (user: Partial<User>) => {
     try {
+      console.table(user);
       dispatch(addUser(user as User)).then(() =>
         showSuccessToast("Usuario agregado correctamente!", "top-right", 4000),
       );
+      // Remover esta línea ya que el estado se actualiza automáticamente
       dispatch(modifyState(user as User));
     } catch (error) {
       showErrorToast("Error al crear usuario!", "top-right", 4000);
@@ -815,6 +818,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
     try {
       dispatch(deleteUser(user));
       showSuccessToast("Usuario borrado correctamente!", "top-right", 4000);
+      // Remover esta línea ya que el estado se actualiza automáticamente
       dispatch(modifyState(user));
     } catch (error) {
       showErrorToast("Error al borrar usuario!", "top-right", 4000);
