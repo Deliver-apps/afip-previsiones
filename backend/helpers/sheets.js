@@ -48,17 +48,13 @@ const formatMoneyFields = (campos) => {
     ),
     ventasNoGeneranCredito: moneyFormat(
       stringToNumber(campos.ventas.notasDeCredito.noGeneranCredito) -
-      stringToNumber(campos.ventas.notasDeCredito.exento) +
-      stringToNumber(campos.ventas.notasDeCredito.neto),
+      stringToNumber(campos.ventas.notasDeCredito.exento)
     ),
     ventasTotal: moneyFormat(
       stringToNumber(campos.ventas.operaciones.neto) -
       stringToNumber(campos.ventas.notasDeCredito.neto) +
       stringToNumber(campos.ventas.operaciones.debito) -
-      stringToNumber(campos.ventas.notasDeCredito.debito) +
-      stringToNumber(campos.ventas.notasDeCredito.noGeneranCredito) -
-      stringToNumber(campos.ventas.notasDeCredito.exento) +
-      stringToNumber(campos.ventas.notasDeCredito.neto) +
+      stringToNumber(campos.ventas.notasDeCredito.debito) -
       campos.ventas.ventaAndIva,
     ),
     comprasNeto: moneyFormat(
@@ -73,10 +69,7 @@ const formatMoneyFields = (campos) => {
       stringToNumber(campos.compras.operaciones.neto) -
       stringToNumber(campos.compras.notasDeCredito.neto) +
       stringToNumber(campos.compras.operaciones.debito) -
-      stringToNumber(campos.compras.notasDeCredito.debito) +
-      stringToNumber(campos.compras.notasDeCredito.noGeneranCredito) -
-      stringToNumber(campos.compras.notasDeCredito.exento) +
-      stringToNumber(campos.compras.operaciones.exento)
+      stringToNumber(campos.compras.notasDeCredito.debito)
     ),
     comprasNoGeneranCredito: moneyFormat(
       stringToNumber(campos.compras.operaciones.exento) +
