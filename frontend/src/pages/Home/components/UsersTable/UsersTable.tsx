@@ -245,7 +245,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
         iva: string;
       }) => {
         if (!userExtra.iva) {
-          userExtra.iva = "21";
+          userExtra.iva = "10.5";  // ✅ Cambiar de "21" a "10.5"
         }
         return userExtra;
       };
@@ -598,7 +598,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
           }}
         >
           <Typography variant="body2" >
-            {formatOutPutCuit(params.row)}
+            {formatOutPutCuit(params.row, true)}
           </Typography>
         </Box>
       ),
@@ -725,7 +725,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
           justifyContent: "center" // ⬅️ centra horizontal
         }}>
           <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
-            {params.value || "-"}
+            {formatOutPutCuit(params.row, false) || "-"}
           </Typography>
         </Box>
       ),
@@ -871,8 +871,8 @@ const UsersTable: React.FC<UsersTableProps> = () => {
     }
   };
 
-  const formatOutPutCuit = (user: User) => {
-    const finalCuit = user.is_company ? user.cuit_company : user.username;
+  const formatOutPutCuit = (user: User, fromUsername: boolean) => {
+    const finalCuit = user.is_company && !fromUsername ? user.cuit_company : user.username;
     if (!finalCuit) return "-";
     return finalCuit.replace(/(\d{2})(\d{8})(\d{1})/, "$1-$2-$3");
   };
@@ -1015,7 +1015,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
                       color="primary"
                       variant="outlined"
                     />
-                    {user.is_company ? user.company_name : user.real_name} ({formatOutPutCuit(user)})
+                    {user.is_company ? user.company_name : user.real_name} ({formatOutPutCuit(user, false)})
                   </Typography>
 
                   <Stack direction="row" spacing={2}>
@@ -1039,11 +1039,10 @@ const UsersTable: React.FC<UsersTableProps> = () => {
                     <FormControl fullWidth>
                       <InputLabel>IVA</InputLabel>
                       <Select
-                        value={userData.iva || "21"}
+                        value={userData.iva || "10.5"}  // ✅ Cambiar de "21" a "10.5"
                         onChange={(e) => handleExternalSalesInputChange(userId, "iva", e.target.value)}
                         label="IVA"
                         error={!!userErrors.iva}
-
                       >
                         <MenuItem value="21">21%</MenuItem>
                         <MenuItem value="10.5">10.5%</MenuItem>
