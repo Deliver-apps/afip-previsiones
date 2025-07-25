@@ -20,7 +20,8 @@ const stringToNumber = (str) => {
 const calculateResult = (campos) => {
   const ventasIVA =
     stringToNumber(campos.ventas.operaciones.debito) -
-    stringToNumber(campos.ventas.notasDeCredito.debito);
+    stringToNumber(campos.ventas.notasDeCredito.debito) + 
+    campos.ventas.iva ?? 0;
 
   const comprasIVA =
     stringToNumber(campos.compras.operaciones.debito) -
@@ -54,7 +55,7 @@ const formatMoneyFields = (campos) => {
       stringToNumber(campos.ventas.operaciones.neto) -
       stringToNumber(campos.ventas.notasDeCredito.neto) +
       stringToNumber(campos.ventas.operaciones.debito) -
-      stringToNumber(campos.ventas.notasDeCredito.debito) -
+      stringToNumber(campos.ventas.notasDeCredito.debito) +
       campos.ventas.ventaAndIva,
     ),
     comprasNeto: moneyFormat(
