@@ -49,13 +49,15 @@ const formatMoneyFields = (campos) => {
     ),
     ventasNoGeneranCredito: moneyFormat(
       stringToNumber(campos.ventas.notasDeCredito.noGeneranCredito) -
-      stringToNumber(campos.ventas.notasDeCredito.exento)
+      stringToNumber(campos.ventas.notasDeCredito.exento) +
+      stringToNumber(campos.ventas.operaciones.exento)
     ),
     ventasTotal: moneyFormat(
       stringToNumber(campos.ventas.operaciones.neto) -
       stringToNumber(campos.ventas.notasDeCredito.neto) +
       stringToNumber(campos.ventas.operaciones.debito) -
       stringToNumber(campos.ventas.notasDeCredito.debito) +
+      stringToNumber(campos.ventas.operaciones.exento) +
       campos.ventas.ventaAndIva,
     ),
     comprasNeto: moneyFormat(
@@ -152,7 +154,7 @@ const putSheetData = async (data, errors = []) => {
       ["CUIT", campos.cuit],
       ["Ventas Neto", formattedMoneyFields.ventasNeto],
       ["Ventas IVA", formattedMoneyFields.ventasIVA],
-      ["Ventas Que No Generan Credito fiscal", formattedMoneyFields.ventasNoGeneranCredito],
+      ["Ventas Que No Generan Débito fiscal", formattedMoneyFields.ventasNoGeneranCredito],
       ["Ventas Total", formattedMoneyFields.ventasTotal],
       ["Compras Neto", formattedMoneyFields.comprasNeto],
       ["Compras IVA", formattedMoneyFields.comprasIVA],
@@ -190,7 +192,7 @@ const putSheetData = async (data, errors = []) => {
     "CUIT",
     "Ventas Neto",
     "Ventas IVA",
-    "Ventas Que No Generan Credito fiscal",
+    "Ventas Que No Generan Débito fiscal",
     "Ventas Total",
     "Compras Neto",
     "Compras IVA",
