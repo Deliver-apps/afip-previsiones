@@ -1,5 +1,6 @@
 const express = require("express");
 const puppeteer = require("puppeteer");
+const axios = require("axios");
 const { individualScraper } = require("../helpers/individualScraper");
 const { putSheetData } = require("../helpers/sheets");
 const logger = require("../config/logger");
@@ -22,7 +23,7 @@ const individualScraperWithTimeout = async (campos, timeout = config.scraper.tim
   }
 
   console.table(formatDataForLogging(campos));
-  
+
   return Promise.race([
     individualScraper(campos),
     new Promise((_, reject) =>
@@ -30,7 +31,7 @@ const individualScraperWithTimeout = async (campos, timeout = config.scraper.tim
         () =>
           reject(
             new Error(
-              `Timeout: la solicitud no se completó en ${timeout/1000} segundos`,
+              `Timeout: la solicitud no se completó en ${timeout / 1000} segundos`,
             ),
           ),
         timeout,
@@ -42,19 +43,20 @@ const individualScraperWithTimeout = async (campos, timeout = config.scraper.tim
 router.post("/previsiones", async (req, res) => {
   console.log("Starting scraping...");
   const { data } = req.body;
-  
+  const { whatsapp } = req.query;
+
   // Validar que data sea un array
   if (!Array.isArray(data) || data.length === 0) {
-    return res.status(400).json({ 
-      success: false, 
-      error: "Data must be a non-empty array" 
+    return res.status(400).json({
+      success: false,
+      error: "Data must be a non-empty array"
     });
   }
 
   const helper = [];
   const responseFailed = [];
   let jobId;
-  
+
   try {
     jobId = addJobToQueue();
     res.status(200).send({
@@ -62,15 +64,15 @@ router.post("/previsiones", async (req, res) => {
       jobId,
       usersLength: data.length,
     });
-    
+
     logger.info(`Starting batch processing for ${data.length} users`);
-    
+
     for (let i = 0; i < data.length; i++) {
       const campos = data[i];
       const userIdentifier = campos.cuit_company || campos.username;
-      
+
       logger.info(`Processing user ${i + 1}/${data.length}: ${userIdentifier}`);
-      
+
       try {
         const result = await individualScraperWithTimeout(campos);
 
@@ -78,25 +80,25 @@ router.post("/previsiones", async (req, res) => {
           logger.error(`Error for ${userIdentifier}: ${result.error}`);
           throw new Error(result.error);
         }
-        
+
         // Validar datos extraídos
         const dataValidation = validateExtractedData(result);
         if (!dataValidation.isValid) {
           logger.warn(`Data validation failed for ${userIdentifier}: ${dataValidation.errors.join(", ")}`);
         }
-        
+
         helper.push(result);
         logger.info(`Successfully processed ${userIdentifier}`);
-        
+
       } catch (error) {
         logger.error(`Failed to process ${userIdentifier}: ${error.message}`);
-        responseFailed.push({ 
-          ...campos, 
+        responseFailed.push({
+          ...campos,
           link: error.link ?? error.message,
           error: error.message,
-          userIdentifier 
+          userIdentifier
         });
-        
+
         // Limitar el número de fallos antes de cancelar
         if (responseFailed.length > 55) {
           throw new Error(
@@ -105,24 +107,185 @@ router.post("/previsiones", async (req, res) => {
         }
       }
     }
-    
+
     logger.info(`Batch processing completed. Success: ${helper.length}, Failed: ${responseFailed.length}`);
+
+    // Send WhatsApp message if requested
+    if (whatsapp && whatsapp === 'true') {
+      const formatCurrency = (amount) => {
+        if (!amount || amount === null || amount === '') return '$0,00';
+
+        let num;
+        if (typeof amount === 'string') {
+          // Remover símbolo $ si existe y espacios
+          let cleanAmount = amount.replace(/\$/g, '').trim();
+
+          // Formato argentino típico: "10.936.639,80"
+          // Los puntos son separadores de miles, la coma es decimal
+          if (cleanAmount.includes('.') && cleanAmount.includes(',')) {
+            // Reemplazar todos los puntos (miles) y cambiar coma por punto (decimal)
+            cleanAmount = cleanAmount.replace(/\./g, '').replace(',', '.');
+          }
+          // Solo tiene coma (decimal): "123,45"
+          else if (cleanAmount.includes(',') && !cleanAmount.includes('.')) {
+            cleanAmount = cleanAmount.replace(',', '.');
+          }
+          // Solo puntos - determinar contexto
+          else if (cleanAmount.includes('.')) {
+            const parts = cleanAmount.split('.');
+            // Si tiene múltiples puntos o el último segmento tiene más de 2 dígitos = miles
+            if (parts.length > 2 || (parts.length === 2 && parts[1].length > 2)) {
+              cleanAmount = cleanAmount.replace(/\./g, '');
+            }
+            // Si solo un punto y últimos 1-2 dígitos = decimal, mantener
+          }
+
+          num = parseFloat(cleanAmount);
+        } else {
+          num = amount;
+        }
+
+        if (isNaN(num)) return '$0,00';
+
+        return new Intl.NumberFormat('es-AR', {
+          style: 'currency',
+          currency: 'ARS',
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }).format(num);
+      };
+      const formatedData = [];
+
+      const formatUserData = (user) => {
+        const ventas = user.ventas || {};
+        const compras = user.compras || {};
+        
+        // Funciones exactas de sheets.js
+        const stringToNumber = (str) => {
+          if (!str || str === null || str === '') return 0;
+          return parseFloat(str.toString().replace(/\./g, "").replace(",", "."));
+        };
+        
+        // Calcular exactamente como formatMoneyFields en sheets.js
+        const ventasNeto = stringToNumber(ventas.operaciones?.neto || 0) -
+                          stringToNumber(ventas.notasDeCredito?.neto || 0) +
+                          (ventas.venta || 0);
+        
+        const ventasIVA = stringToNumber(ventas.operaciones?.debito || 0) -
+                         stringToNumber(ventas.notasDeCredito?.debito || 0) +
+                         (ventas.iva || 0);
+        
+        const ventasQueNoGeneranDebito = stringToNumber(ventas.notasDeCredito?.noGeneranCredito || 0) -
+                                        stringToNumber(ventas.notasDeCredito?.exento || 0) +
+                                        stringToNumber(ventas.operaciones?.exento || 0);
+        
+        const ventasTotal = stringToNumber(ventas.operaciones?.neto || 0) -
+                           stringToNumber(ventas.notasDeCredito?.neto || 0) +
+                           stringToNumber(ventas.operaciones?.debito || 0) -
+                           stringToNumber(ventas.notasDeCredito?.debito || 0) +
+                           stringToNumber(ventas.operaciones?.exento || 0) +
+                           (ventas.ventaAndIva || 0);
+        
+        const comprasNeto = stringToNumber(compras.operaciones?.neto || 0) -
+                           stringToNumber(compras.notasDeCredito?.neto || 0);
+        
+        const comprasIVA = stringToNumber(compras.operaciones?.debito || 0) -
+                          stringToNumber(compras.notasDeCredito?.debito || 0);
+        
+        const comprasTotal = stringToNumber(compras.operaciones?.neto || 0) -
+                            stringToNumber(compras.notasDeCredito?.neto || 0) +
+                            stringToNumber(compras.operaciones?.debito || 0) -
+                            stringToNumber(compras.notasDeCredito?.debito || 0);
+        
+        const comprasQueNoGeneranCredito = stringToNumber(compras.operaciones?.exento || 0) +
+                                          stringToNumber(compras.notasDeCredito?.noGeneranCredito || 0);
+        
+        // Calcular resultado final exacto como calculateResult en sheets.js
+        const ventasIVAForCalc = stringToNumber(ventas.operaciones?.debito || 0) -
+                                stringToNumber(ventas.notasDeCredito?.debito || 0) +
+                                (ventas.iva || 0);
+        
+        const comprasIVAForCalc = stringToNumber(compras.operaciones?.debito || 0) -
+                                 stringToNumber(compras.notasDeCredito?.debito || 0);
+        
+        const result = ventasIVAForCalc - comprasIVAForCalc;
+        const estado = result < 0 ? "A Favor" : "A Pagar";
+
+        formatedData.push({
+          nameToShow: user.nameToShow || 'Sin nombre',
+          cuit: user.cuit || 'N/A',
+          ventasNeto: formatCurrency(ventasNeto),
+          ventasIVA: formatCurrency(ventasIVA),
+          ventasQueNoGeneranDebito: formatCurrency(ventasQueNoGeneranDebito),
+          ventasTotal: formatCurrency(ventasTotal),
+          comprasNeto: formatCurrency(comprasNeto),
+          comprasIVA: formatCurrency(comprasIVA),
+          comprasTotal: formatCurrency(comprasTotal),
+          comprasQueNoGeneranCredito: formatCurrency(comprasQueNoGeneranCredito),
+          estado: estado,
+          result: formatCurrency(result)
+        });
+      };
+
+      try {
+        helper.map(formatUserData);
+        for (const data of formatedData) {
+          const formattedMessage = `📊 *${data.nameToShow}*
+            CUIT: ${data.cuit}
+            Ventas Neto ${data.ventasNeto}
+            Ventas IVA ${data.ventasIVA}
+            Ventas Que No Generan Débito fiscal ${data.ventasQueNoGeneranDebito}
+            Ventas Total ${data.ventasTotal}
+            Compras Neto ${data.comprasNeto}
+            Compras IVA ${data.comprasIVA}
+            Compras Total ${data.comprasTotal}
+            Compras Que No Generan Credito fiscal ${data.comprasQueNoGeneranCredito}
+            ${data.estado} ${data.result}`;
+
+          // await axios.post(`${config.whatsappApiUrl}test-message`, {
+          //   "phone": "5491136585581",
+          //   "message": formattedMessage,
+          //   "isGroup": false
+          // });
+
+           await axios.post(`${config.whatsappApiUrl}test-message`, {
+            "phone": "120363401945950239",
+            "message": formattedMessage,
+            "isGroup": true
+           });
+        }
+        //  await axios.post(`${config.whatsappApiUrl}test-message`, {
+        //   "phone": "120363401945950239",
+        //   "message": formattedMessage,
+        //   "isGroup": true
+        // });
+        // await axios.post(`${config.whatsappApiUrl}test-message`, {
+        //   "phone": "5491136585581",
+        //   "message": formattedMessage,
+        //   "isGroup": false
+        // });
+        logger.info('WhatsApp message sent successfully');
+      } catch (whatsappError) {
+        logger.error(`Failed to send WhatsApp message: ${whatsappError.message}`);
+      }
+    }
+
     await putSheetData(helper, responseFailed);
     updateJob(jobId, "finished");
-    
+
   } catch (error) {
     console.error(error);
     logger.error(`Batch processing failed: ${error.message}`);
-    
+
     if (jobId) {
       updateJob(jobId, "failed");
     }
-    
-    res.status(500).json({ 
-      success: false, 
+
+    res.status(500).json({
+      success: false,
       error: error.message,
       processed: helper.length,
-      failed: responseFailed.length 
+      failed: responseFailed.length
     });
   }
 });
@@ -165,7 +328,8 @@ router.post("/comprobantes", async (req, res) => {
 
     await newPage.waitForSelector("#F1\\:password");
     await newPage.type("#F1\\:password", password); // Cambia '#password' por el selector correcto
-    await newPage.click("#F1\\:btnIngresar");
+    await new Promise((resolve) => setTimeout(resolve, 3_000));
+    await newPage.click('[id="F1:btnIngresar"]');
 
     await newPage.waitForSelector("#buscadorInput");
     await newPage.type("#buscadorInput", "mis comprobantes");
@@ -221,12 +385,12 @@ router.post("/comprobantes", async (req, res) => {
         month: "2-digit",
         year: "numeric",
       }) +
-        " - " +
-        new Date(range[1]).toLocaleDateString("es-AR", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        }),
+      " - " +
+      new Date(range[1]).toLocaleDateString("es-AR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      }),
     );
     await new Promise((resolve) => setTimeout(resolve, 2000));
     await newPage2.click("#buscarComprobantes");
@@ -255,12 +419,12 @@ router.post("/comprobantes", async (req, res) => {
         month: "2-digit",
         year: "numeric",
       }) +
-        " - " +
-        new Date(range[1]).toLocaleDateString("es-AR", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        }),
+      " - " +
+      new Date(range[1]).toLocaleDateString("es-AR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      }),
     );
     await new Promise((resolve) => setTimeout(resolve, 2000));
     await newPage2.click("#buscarComprobantes");

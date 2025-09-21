@@ -11,7 +11,7 @@ const config = {
   digitalOceanAccessKey: process.env.DO_ACCESS_KEY,
   digitalOceanSecretKey: process.env.DO_SECRET_KEY,
   baseUrlDo: process.env.BASE_URL_DO,
-  
+  whatsappApiUrl: process.env.WHATSAPP_API_URL,
   // Configuraciones del scraper
   scraper: {
     timeout: parseInt(process.env.SCRAPER_TIMEOUT) || 400000, // 6.6 minutos

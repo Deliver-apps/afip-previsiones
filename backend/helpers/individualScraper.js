@@ -44,6 +44,7 @@ const individualScraper = async ({
   let page;
   let newPage;
   let newPage2;
+  let currentPage = null; // Rastrear la pestaña actual donde estamos trabajando
   
   const startTime = Date.now();
   const userIdentifier = isCompany ? cuitCompany : username;
@@ -74,7 +75,7 @@ const individualScraper = async ({
     });
   } catch (error) {
     logger.error(`Failed to launch browser for ${userIdentifier}: ${error.message}`);
-    throw new Error("Failed to launch browser: " + error.message);
+    throw new Error(`No se pudo procesar la solicitud para ${userIdentifier}. Por favor, intente nuevamente.`);
   }
 
   page = await browser.newPage();
@@ -85,6 +86,52 @@ const individualScraper = async ({
   await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
   
   const url = "https://www.afip.gob.ar/landing/default.asp";
+
+  // Función para obtener la pestaña visible/activa actual del navegador
+  const getActivePage = async () => {
+    try {
+      // Si tenemos currentPage rastreado, usarlo primero
+      if (currentPage && !currentPage.isClosed()) {
+        try {
+          await currentPage.evaluate(() => document.readyState);
+          return currentPage;
+        } catch (e) {
+          // currentPage ya no es válida, continuar
+        }
+      }
+      
+      // Obtener todas las pestañas y encontrar la que tiene contenido válido
+      const pages = await browser.pages();
+      const validPages = [];
+      
+      for (const p of pages) {
+        try {
+          if (!p.isClosed()) {
+            // Verificar que la pestaña tenga contenido válido
+            const url = await p.url();
+            const title = await p.title().catch(() => '');
+            // Si tiene URL válida (no about:blank) o título, es una pestaña válida
+            if (url && url !== 'about:blank' && url !== 'chrome://newtab/') {
+              validPages.push({ page: p, url, title });
+            }
+          }
+        } catch (e) {
+          // Ignorar páginas que no se pueden verificar
+        }
+      }
+      
+      // Si hay pestañas válidas, retornar la última (más reciente)
+      if (validPages.length > 0) {
+        return validPages[validPages.length - 1].page;
+      }
+      
+      // Fallback: usar las pestañas conocidas
+      return newPage2 || newPage || page;
+    } catch (error) {
+      logger.warn(`Error getting active page: ${error.message}`);
+      return newPage2 || newPage || page;
+    }
+  };
 
   const closeBrowser = async () => {
     if (browser) {
@@ -128,12 +175,14 @@ const individualScraper = async ({
 
   try {
     // Navigate to the initial URL
+    currentPage = page;
     await page.goto(url);
     await page.waitForSelector("a.btn.btn-sm.btn-info.btn-block.uppercase");
     await page.click("a.btn.btn-sm.btn-info.btn-block.uppercase");
 
     // Handle the new page that opens after clicking
     newPage = await getNewPage(browser);
+    currentPage = newPage;
 
     await loginToAfip(newPage, username, password);
 
@@ -142,6 +191,7 @@ const individualScraper = async ({
 
     // Handle the new page that opens after clicking "Portal IVA"
     newPage2 = await getNewPage(browser);
+    currentPage = newPage2;
 
     // Handle company selection if applicable
     if (isCompany) {
@@ -180,21 +230,25 @@ const individualScraper = async ({
     const executionTime = Date.now() - startTime;
     logger.error(`Final error for ${userIdentifier} after ${executionTime}ms: ${error.message}`);
     
-    const seletedPage = newPage2 || newPage || page;
+    // Obtener la pestaña activa actual donde ocurrió el error
+    const activePage = await getActivePage();
     let screenshotUrl = null;
     
     try {
-      const screenshotBuffer = await seletedPage.screenshot({
+      await activePage.waitForFunction(() => document.readyState === "complete", { timeout: 5000 }).catch(() => {});
+      const screenshotBuffer = await activePage.screenshot({
         encoding: "binary",
+        fullPage: true
       });
       const fileName = `screenshots/screenshot-${Date.now()}-${userIdentifier}.png`;
       await uploadToSpaces(screenshotBuffer, fileName);
       screenshotUrl = `https://previsiones-afip.nyc3.cdn.digitaloceanspaces.com/${fileName}`;
+      logger.info(`Screenshot saved for ${userIdentifier}: ${screenshotUrl}`);
     } catch (screenshotError) {
       logger.error(`Failed to take screenshot for ${userIdentifier}: ${screenshotError.message}`);
     }
 
-    await handleRetry(error, newPage2 || newPage || page);
+    await handleRetry(error, activePage);
 
     return {
       error: error.message,
@@ -423,7 +477,7 @@ const getNewPage = async (browser) => {
     return newPageC;
   } catch (error) {
     logger.error("Error in getNewPage:", error); // Log the full error details
-    throw new Error("Failed to open new page: " + error.message);
+    throw new Error(`No se pudo acceder a la siguiente página. Por favor, verifique su conexión e intente nuevamente.`);
   }
 };
 
@@ -437,13 +491,16 @@ const loginToAfip = async (page, username, password) => {
     });
     await page.type("#F1\\:username", username);
     await page.click("#F1\\:btnSiguiente");
-
+    await new Promise((resolve) => setTimeout(resolve, 3_000));
     await page.waitForSelector("#F1\\:password", {
       timeout: 16_000,
     });
     await page.type("#F1\\:password", password);
+    logger.info("Waiting before clicking login button...");
+    await new Promise((resolve) => setTimeout(resolve, 3_000));
     logger.info("Clicking login button...");
-    await page.click("#F1\\:btnIngresar");
+    await new Promise((resolve) => setTimeout(resolve, 3_000));
+    await page.click('[id="F1:btnIngresar"]');
   } catch (error) {
     const screenshotBuffer = await page.screenshot({ encoding: "binary" });
     const fileName = `screenshots/screenshot-${Date.now()}.png`;
@@ -469,7 +526,7 @@ const navigateToPortalIVA = async (page) => {
     await uploadToSpaces(screenshotBuffer, fileName);
     const url = `https://previsiones-afip.nyc3.cdn.digitaloceanspaces.com/${fileName}`;
     logger.verbose("Failed to navigate to Portal IVA: " + error.message);
-    throw new Error(url);
+    throw new Error(`No se pudo acceder al Portal IVA. Screenshot: ${url}`);
   }
 };
 
@@ -530,7 +587,7 @@ const switchCompanyContext = async (page, cuitCompany) => {
     await uploadToSpaces(screenshotBuffer, fileName);
     const url = `https://previsiones-afip.nyc3.cdn.digitaloceanspaces.com/${fileName}`;
     logger.verbose("Failed to switch company context: " + error.message);
-    throw new Error(url);
+    throw new Error(`No se pudo cambiar al contexto de la empresa. Screenshot: ${url}`);
   }
 };
 
@@ -573,7 +630,7 @@ const checkAndValidatePeriod = async (page) => {
     await uploadToSpaces(screenshotBuffer, fileName);
     const url = `https://previsiones-afip.nyc3.cdn.digitaloceanspaces.com/${fileName}`;
     logger.verbose("Failed to validate period: " + error.message);
-    throw new Error(url);
+    throw new Error(`No se pudo validar el período de declaración. Screenshot: ${url}`);
   }
 };
 
@@ -695,7 +752,8 @@ const extractData = async (
     const screenshotBuffer = await page.screenshot({ encoding: "binary" });
     const fileName = `screenshots/screenshot-${Date.now()}.png`;
     await uploadToSpaces(screenshotBuffer, fileName);
-    throw new Error("Failed to extract data: " + error.message);
+    const url = `https://previsiones-afip.nyc3.cdn.digitaloceanspaces.com/${fileName}`;
+    throw new Error(`No se pudieron obtener los datos de previsiones. Screenshot: ${url}`);
   }
 };
 
@@ -711,7 +769,7 @@ const retryWithDelay = async (page, selector, delay) => {
     const fileName = `screenshots/screenshot-${Date.now()}.png`;
     await uploadToSpaces(screenshotBuffer, fileName);
     const url = `https://previsiones-afip.nyc3.cdn.digitaloceanspaces.com/${fileName}`;
-    throw new Error(url);
+    throw new Error(`La página no respondió a tiempo. Por favor, intente nuevamente. Screenshot: ${url}`);
   }
 };
 
