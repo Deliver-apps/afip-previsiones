@@ -105,10 +105,11 @@ export const checkJobStatus = async (
 
 export const generatePrevisiones = async (
   data: User[],
+  whatsapp: boolean = false,
 ): Promise<AxiosResponse<ResponsePrevisiones> | AxiosError> => {
   try {
     const response = await axios.post(
-      `${apiUrl}api/scrape/previsiones`,
+      `${apiUrl}api/scrape/previsiones?whatsapp=${whatsapp}`,
       {
         data,
       },

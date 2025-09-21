@@ -49,6 +49,7 @@ import {
   AttachMoney,
   Percent,
   TrendingUp,
+  WhatsApp,
 } from "@mui/icons-material";
 import CircularProgress from "@mui/material/CircularProgress";
 import spanishLocaleText from "@src/helpers/spanish.helper";
@@ -125,6 +126,13 @@ const UsersTable: React.FC<UsersTableProps> = () => {
     [userId: number]: { [field: string]: string }
   }>({});
   const [rowSelection, setRowSelection] = React.useState<GridRowSelectionModel>([]);
+  const [openWhatsAppModal, setOpenWhatsAppModal] = useState(false);
+  const [pendingExternalSalesData, setPendingExternalSalesData] = useState<{
+    userId: number,
+    venta: string,
+    iva: string
+  }[]>([]);
+  const [whatsappConfirmed, setWhatsappConfirmed] = useState<boolean | null>(null);
 
   const handleSalesToggle = (rowId: number, checked: boolean) => {
     setUsersToLoadSales(prev => {
@@ -235,6 +243,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
   const handleSalesCancel = () => {
     setOpenSalesDialog(false);
     setExternalSalesErrors({});
+    setWhatsappConfirmed(null); // Resetear confirmación de WhatsApp
   };
 
   const handleExternalSalesSubmit = async () => {
@@ -256,15 +265,53 @@ const UsersTable: React.FC<UsersTableProps> = () => {
       setExternalSalesData([]);
       setExternalSalesErrors({});
 
-      await handleGenerar(usersWithIva);
+      // Usar la confirmación de WhatsApp ya guardada
+      if (whatsappConfirmed !== null) {
+        await handleGenerar(usersWithIva, whatsappConfirmed);
+        setWhatsappConfirmed(null);
+      } else {
+        // Fallback: si no hay confirmación guardada, abrir modal de WhatsApp
+        handleWhatsAppModalOpen(usersWithIva);
+      }
     }
+  };
+
+  const handleWhatsAppModalOpen = (usuariosIva: {
+    userId: number;
+    venta: string;
+    iva: string;
+  }[]) => {
+    setPendingExternalSalesData(usuariosIva);
+    setOpenWhatsAppModal(true);
+  };
+
+  const handleWhatsAppConfirm = async (sendWhatsApp: boolean) => {
+    setOpenWhatsAppModal(false);
+    setWhatsappConfirmed(sendWhatsApp);
+    
+    // Si hay ventas externas pendientes, abrir el modal de ventas externas
+    if (usersToLoadSales.length > 0) {
+      setOpenSalesDialog(true);
+      return;
+    }
+    
+    // Si no hay ventas externas, ejecutar directamente
+    await handleGenerar(pendingExternalSalesData, sendWhatsApp);
+    setPendingExternalSalesData([]);
+    setWhatsappConfirmed(null);
+  };
+
+  const handleWhatsAppCancel = () => {
+    setOpenWhatsAppModal(false);
+    setPendingExternalSalesData([]);
+    setWhatsappConfirmed(null);
   };
 
   const handleGenerar = async (usuariosIva: {
     userId: number;
     venta: string;
     iva: string;
-  }[]) => {
+  }[], whatsapp: boolean = false) => {
     if (rowSelection.length === 0) {
       showErrorToast("Debe seleccionar al menos un usuario", "top-right", 4000);
       return;
@@ -287,7 +334,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
           venta: toNumberAR(usuariosIva.find(iva => iva.userId === user.id)?.venta)
         }));
         console.log("filteredUsers con Iva", filteredUsersWithIva);
-        const response = await generatePrevisiones(filteredUsersWithIva);
+        const response = await generatePrevisiones(filteredUsersWithIva, whatsapp);
         console.log(response);
         if (isAxiosError(response)) {
           showErrorToast(
@@ -443,7 +490,7 @@ const UsersTable: React.FC<UsersTableProps> = () => {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Button
               disabled={rowSelection.length <= 0 || loadingPrevisiones}
-              onClick={() => handleGenerar(externalSalesData)}
+              onClick={() => handleWhatsAppModalOpen(externalSalesData)}
               variant="contained"
               color="primary"
               startIcon={
@@ -1129,6 +1176,75 @@ const UsersTable: React.FC<UsersTableProps> = () => {
             No
           </Button>
           <Button onClick={handleAccept} color="error" autoFocus>
+            Sí
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Modal de Confirmación de WhatsApp */}
+      <Dialog
+        open={openWhatsAppModal}
+        onClose={() => {}} // Deshabilitar cierre con click fuera o escape
+        aria-labelledby="whatsapp-dialog-title"
+        aria-describedby="whatsapp-dialog-description"
+        disableEscapeKeyDown
+        sx={{
+          "& .MuiDialog-paper": {
+            borderRadius: 3,
+            minWidth: 400,
+          }
+        }}
+      >
+        <DialogTitle 
+          id="whatsapp-dialog-title"
+          sx={{
+            bgcolor: 'primary.main',
+            color: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            py: 2
+          }}
+        >
+          <WhatsApp />
+          <Typography variant="subtitle1">
+            Envío por WhatsApp
+          </Typography>
+        </DialogTitle>
+        <DialogContent sx={{ p: 3, pt: 2 }}>
+          <DialogContentText id="whatsapp-dialog-description" sx={{ mb: 2 }}>
+            ¿Desea enviar los resultados de las previsiones por WhatsApp?
+          </DialogContentText>
+          <Alert severity="info">
+            Seleccione "Sí" para enviar automáticamente los resultados por WhatsApp, 
+            o "No" para generar las previsiones sin envío automático.
+          </Alert>
+        </DialogContent>
+        <DialogActions sx={{ p: 3, pt: 1, gap: 1 }}>
+          <Button 
+            onClick={handleWhatsAppCancel}
+            variant="outlined"
+            color="error"
+            size="large"
+          >
+            Cancelar
+          </Button>
+          <Button 
+            onClick={() => handleWhatsAppConfirm(false)}
+            variant="outlined"
+            color="primary"
+            size="large"
+          >
+            No
+          </Button>
+          <Button 
+            onClick={() => handleWhatsAppConfirm(true)}
+            variant="contained"
+            color="success"
+            startIcon={<WhatsApp />}
+            size="large"
+            autoFocus
+          >
             Sí
           </Button>
         </DialogActions>
